@@ -855,3 +855,29 @@ html[data-feature-mode="both"] .feature-toggle .feature-choice:not(.feature-choi
     color: #222;
     font-weight: 600;
 }
+/* Legacy manual retirement watermark. */
+body::before {
+  content: "OLD Manual not maintained anymore";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-28deg);
+  z-index: 9999;
+  pointer-events: none;
+  color: rgba(150, 0, 0, 0.13);
+  font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+  font-size: clamp(2.5rem, 7vw, 7rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media print {
+  body::before {
+    color: rgba(150, 0, 0, 0.18);
+  }
+}
+
