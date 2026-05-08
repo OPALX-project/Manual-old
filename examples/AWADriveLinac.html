@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.26">
+<title>Drive linac</title>
+<style>
+
+</style>
+</head>
+<body class="book">
+<div id="header">
+<h1>Drive linac</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This example describes the AWA drive linac beamline which includes RF photocathode gun and 6 standing wave linac cavities. The model is based on the <a href="https://napac2022.vrws.de/papers/wexd5.pdf">paper</a> by S.-Y. Kim et al..
+<a href="mailto:sykim12@postech.ac.kr">Email</a> of the corresponding author and provider of the example.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_goal">Goal</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Run the AWA drive linac beamline (OPAL_t), and check the beam parameters obtained from the simulation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_preparation">Preparation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you do not have already access to OPAL, you can visit <a href="home">the download page</a>. In
+case OPAL is on your cluster please check with the administrator how to use. PSI user please click <a href="OPALATPSI">here</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_needed_input_files">Needed Input Files</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For the AWA drive linac simulation, we need OPAL input deck, and fieldmaps such as RF gun, drive linac cavity, bucking/focusing solenoid magnet, and matching solenoid magnet.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Inputfile <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/input.in">input.in</a></p>
+</li>
+<li>
+<p>Bucking/focusing solenoid, and  matching solenoid field maps: <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/BF550.T7">BF550.T7</a> and <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/M440.T7">M440.T7</a>.</p>
+</li>
+<li>
+<p>RF gun field map <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/GUN.T7">GUN.T7</a></p>
+</li>
+<li>
+<p>Drive linac cavity field map <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/DriveLinac.T7">DriveLinac.T7</a></p>
+</li>
+<li>
+<p>Drive linac solenoids (disabled in the input file) <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/DS4.T7" class="bare">https://amas.web.psi.ch/wiki/AWADriveLinac/DS4.T7</a>][DS4.T7] and <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/DS5.T7">DS5.T7</a></p>
+<div class="paragraph">
+<p>== Run the AWA drive linac simulation</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Here, grid is set to: MX = 64, MY = 64, MZ = 32</p>
+</div>
+<div class="paragraph">
+<p><code>opal  input.in | tee input.out</code></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_results_and_postprocessing">Results and Postprocessing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://amas.web.psi.ch/wiki/AWADriveLinac/OPAL_Drivelinac_Example.pdf">Results</a>
+A simple Python <a href="https://amas.web.psi.ch/wiki/AWADriveLinac/Opal_beamdist_plot.py">script</a> not using pyOPALTools.</p>
+</div>
+<div class="paragraph">
+<p>For general post processing, please visit <a href="../postprocessing.html">the local postprocessing page</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2026-04-28 23:34:17 +0200
+</div>
+</div>
+</body>
+</html>

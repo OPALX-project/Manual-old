@@ -1,0 +1,246 @@
+= The _OPAL(X)_ Framework Documentation
+Andreas Adelmann (PSI); Pedro Calvo (CIEMAT); Achim Gsell (PSI);  Sriramkrishnan Muralikrishnan (JSC); Nicole Neveu (SLAC); Philippe Piot (NIU); Chris Rogers (RAL); Mohsen Sadr (PSI/MIT); Jochem Snuverink (PSI); Jonathan Thompson (RAL); Daniel Winklehner (MIT) 
+ifdef::backend-docbook5,backend-html5[]
+:docinfo1:
+:toc: left
+:numbered:
+:description: _OPAL_ User Manual
+:keywords: _OPAL_
+:revdate: 2025-11-27
+:adoc: adoc
+:markdown:
+endif::[]
+
+ifdef::backend-html5[]
+:imagesdir: .
+endif::[]
+
+ifdef::env-gitlab[]
+include::env-gitlab.attributes[]
+endif::[]
+
+include::Manual.attributes[]
+
+ifdef::backend-html5[]
+
+[cols="<19,<27,<.^27,<27",frame="none",grid="none"]
+|===
+| image:logos/psi_logo.png[width=121]
+| image:logos/ciemat_logo.jpg[width=242]
+| image:logos/SLAC-lab-hires.png[width=220]
+| image:logos/UKRI_STF_logo.png[width=176]
+| image:logos/MIT-logo-with-spelling-design1-large-black-red.svg[width=175]
+| image:logos/Logo_FZ_Juelich_1561x454_rgb_jpg.jpg[width=165]
+| image:logos/NIU_horz_3Clr.png[width=165]
+|
+|===
+
+'''
+endif::[]
+
+ifdef::backend-html5[]
+include::stylesheets/ToggleUI[]
+endif::[]
+
+:sectnums!:
+== Preliminary note
+
+opal-begin
+This is the manual for _OPAL_ {OPAL_version} which is still under development. Use at your own risc.
+
+New feature might not yet be documented or something is already documented
+but not yet implemented.
+opal-end
+
+opalx-begin
+This is the manual for _OPALX_ {OPALX_version} which is still under heavy development.
+opalx-end
+
+:sectnums:
+== Abstract
+opal-begin
+_OPAL_ is a parallel open source tool for charged-particle optics in linear accelerators and rings, including 3D space charge.
+Using the _MAD_ language with extensions, _OPAL_ can run on a laptop as well as on the largest high performance computing systems.
+_OPAL_ is built from the ground up as a parallel application exemplifying the fact that high performance computing is the third leg of science, complementing theory and experiment.
+
+The _OPAL_ framework makes it easy to add new features in the form of new _C++_ classes.
+_OPAL_ comes in the following flavours:
+
+_OPAL-cycl_::
+  tracks particles with 3D space charge including neighbouring turns in
+  cyclotrons and FFAs with time as the independent variable.
+_OPAL-t_::
+  models beam lines, linacs, rf-photo injectors and
+  complete XFELs.
+_OPAL-map_::
+  map tracking (experimental, no space charge yet)
+
+It should be noted that not all features of _OPAL_ are available in all
+flavours.
+opal-end
+
+opal-begin
+_OPAL_ is a parallel open source tool for charged-particle optics in linear accelerators and rings, including 3D space charge.
+Using the _MAD_ language with extensions, _OPAL_ can run on a laptop as well as on the largest high performance computing systems.
+_OPAL_ is built from the ground up as a parallel application exemplifying the fact that high performance computing is the third leg of science, complementing theory and experiment.
+opal-end
+
+opalx-begin
+_OPALX_ is a rewrite of _OPAL_, achiving Performance Portability among NVIDIA, AMD and Intel GPUs.
+_OPALX_ is a parallel open source tool targeting Exascal computing and at the same time is running on your local cluster or laptop.
+The primary use is for charged-particle optics computations in linear accelerators and rings, including 3D space charge.
+Using the same _MAD_ language with extensions, _OPALX_ is mostly backward compatible with _OPAL_. This manual shows precicely the small differernces.
+
+The _OPALX_ framework makes it easy to add new features in the form of new _C++20_ classes.
+opalx-end
+
+=== Download of Binaries and Clone of Repository
+
+opalx-begin
+not yet avaidable
+opalx-end
+
+opal-begin
+:link_src_2024-1:  {link_src}/OPAL-2024.1.0/OPAL-2024.1.0
+:link_src_2022-1:  {link_src}/OPAL-2022.1.0/OPAL-2022.1.0
+:link_src_2021-1:  {link_src}/OPAL-2021.1.0/OPAL-2021.1.0
+
+[%header,width="80%",cols="2,2,2,2,2,2"]
+|========
+| Version/ +
+  Source code
+| Linux binary +
+  package
+| macOS binary +
+  package
+| Manual
+| Source code +
+  documentation
+| Release +
+  notes
+
+| _OPAL_ development
+| n.a.
+| n.a.
+| {link_public_manual}[HTML]
+| {link_doxygen_doc}[HTML]
+| n.a.
+
+| {link_src_2024-1}.tar.xz[_OPAL_ 2024.1.0]
+|
+|
+|
+| {link_doxygen_doc}[HTML]
+| link:ReleaseNotes/OPAL-2024.1.html[Release notes 2024.1]
+
+| {link_src_2022-1}.tar.xz[_OPAL_ 2022.1.0]
+| {link_src_2022-1}-1{linux_pkg} ({link_src_2022-1}-1{linux_md5})
+| {link_src_2022-1}-1{macos_pkg} ({link_src_2022-1}-1{macos_md5}) +
+  {link_src_2022-1}-1{macos_arm_pkg} ({link_src_2022-1}-1{macos_arm_md5})
+|
+| {link_doxygen_doc}[HTML]
+| link:ReleaseNotes/OPAL-2022.1.html[Release notes 2022.1]
+
+| {link_src_2021-1}.tar.xz[_OPAL_ 2021.1.0]
+| {link_src_2021-1}-1{linux_pkg} ({link_src_2021-1}-1{linux_md5})
+| {link_src_2021-1}-1{macos_pkg} ({link_src_2021-1}-1{macos_md5})
+|
+| {link_doxygen_doc}[HTML]
+| link:ReleaseNotes/OPAL-2021.1.html[Release notes 2021.1]
+
+|========
+
+Instead of downloading the source tar-ball you can get the _OPAL_ source via Git. Either clone the whole Git repository (~ 2 GB!) with
+
+[source,sh,subs="attributes"]
+----
+git clone {link_OPAL_repo}.git
+----
+
+or clone a specific branch/tag with
+
+[source,sh,subs="attributes"]
+----
+git clone --single-branch --depth 1 --branch BRANCH_OR_TAG {link_OPAL_repo}.git [DIR]
+----
+
+* link:OPAL-binary-package.html[installing and running a _OPAL_ binary package].
+* link:OPAL-binary-package-ChangeLog.html[ChangeLog of the binary packages].
+* link:OPAL-binary-package-old-versions.html[Deprecated versions].
+opal-end
+
+ifdef::env-gitlab[]
+:sectnums!:
+== Table of Contents
+. {link_manual_src}/introduction.{asciidoc}[Introduction]
+. {link_manual_src}/conventions.{asciidoc}[Conventions]
+. {link_manual_src}/pitfalls.{asciidoc}[Pitfalls and Limitations]
+. {link_manual_src}/tutorial.{asciidoc}[Tutorial]
+. {link_manual_src}/opalt.{asciidoc}[OPAL-T]
+. {link_manual_src}/opalcycl.{asciidoc}[OPAL-CYCL]
+. {link_manual_src}/opalmap.{asciidoc}[OPAL-MAP]
+. {link_manual_src}/format.{asciidoc}[Command Format]
+. {link_manual_src}/control.{asciidoc}[Control Statements]
+. {link_manual_src}/elements.{asciidoc}[Elements]
+. {link_manual_src}/field-output.{asciidoc}[Field Output Commands]
+. {link_manual_src}/lines.{asciidoc}[Beam Lines]
+. {link_manual_src}/beam-command.{asciidoc}[Beam Command]
+. {link_manual_src}/distribution.{asciidoc}[Distribution Command]
+. {link_manual_src}/emission-source.adoc[Emission Sources]
+. {link_manual_src}/energybins.{asciidoc}[Energy Bins]
+. {link_manual_src}/fieldsolvers.{asciidoc}[Field Solver]
+. {link_manual_src}/track.{asciidoc}[Tracking]
+. {link_manual_src}/wakefields.{asciidoc}[Wakefields]
+. {link_manual_src}/geometry.{asciidoc}[Geometry]
+. {link_manual_src}/collisions.{asciidoc}[Physics Models Used in Modelling Collisions]
+. {link_manual_src}/partmatter.{asciidoc}[Physics Models Used in the Particle Matter Interaction Model]
+. {link_manual_src}/optimiser.{asciidoc}[Multi Objective Optimization]
+. {link_manual_src}/sampler.{asciidoc}[Sampler]
+
+.Appendices
+[upperalpha]
+. {link_manual_src}/fieldmaps.{asciidoc}[OPAL-T Field Maps]
+. {link_manual_src}/syntax.{asciidoc}[OPAL Language Syntax]
+. {link_manual_src}/opal-madx.{asciidoc}[OPAL-MADX Conversion Guide]
+. {link_manual_src}/autophase.{asciidoc}[Auto-phasing Algorithm]
+. {link_manual_src}/benchmarks.{asciidoc}[Benchmarks]
+. {link_manual_src}/ics_gg_design_note.{asciidoc}[OPALX Design Note: Laser--Electron ICS and gamma-gamma Collision Physics]
+endif::[]
+
+ifdef::backend-docbook5,backend-html5[]
+include::introduction.asciidoc[]
+include::conventions.asciidoc[]
+include::pitfalls.asciidoc[]
+include::tutorial.asciidoc[]
+include::opalt.asciidoc[]
+include::opalcycl.asciidoc[]
+include::opalmap.asciidoc[]
+include::format.asciidoc[]
+include::control.asciidoc[]
+include::elements.asciidoc[]
+include::field-output.asciidoc[]
+include::lines.asciidoc[]
+include::beam-command.asciidoc[]
+include::distribution.asciidoc[]
+include::emission-source.asciidoc[]
+include::energybins.asciidoc[]
+include::fieldsolvers.asciidoc[]
+include::track.asciidoc[]
+include::wakefields.asciidoc[]
+include::geometry.asciidoc[]
+include::collisions.asciidoc[]
+include::partmatter.asciidoc[]
+include::optimiser.asciidoc[]
+include::sampler.asciidoc[]
+include::fieldmaps.asciidoc[]
+include::syntax.asciidoc[]
+include::opal-madx.asciidoc[]
+include::autophase.asciidoc[]
+include::benchmarks.asciidoc[]
+[appendix]
+include::ics_gg_design_note.asciidoc[leveloffset=+1]
+[appendix]
+include::developer-build.asciidoc[leveloffset=+1]
+endif::[]
+
+// EOF

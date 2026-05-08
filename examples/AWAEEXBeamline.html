@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.26">
+<title>EEX beamline</title>
+<style>
+
+</style>
+</head>
+<body class="book">
+<div id="header">
+<h1>EEX beamline</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This example describes AWA emittance exchange (EEX) beamline. The model is based on the <a href="https://napac2022.vrws.de/papers/wexd5.pdf">paper</a> by S.-Y. Kim et al.. For more details on the EEX beamline,
+please find the reference papers;</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>M. Cornacchia, P. Emma, Phys. Rev. ST Accel. Beams 5, 084001, 2002 (<a href="https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.5.084001" class="bare">https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.5.084001</a>)</p>
+</li>
+<li>
+<p>P. Piot, Y.-E Sun, J. G. Power, and M. Rihaoui, Phys. Rev. ST Accel. Beams 14, 022801, 2011 (<a href="https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.14.022801" class="bare">https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.14.022801</a>)</p>
+</li>
+<li>
+<p>G. Ha et al., Phys. Rev. Lett. 118, 104801, 2017 (<a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.118.104801" class="bare">https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.118.104801</a>)
+<a href="mailto:sykim12@postech.ac.kr">Email</a> of the provider of the example.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_goal">Goal</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Run the EEX linac beamline (OPAL_t), and check the beam parameters obtained from the simulation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_preparation">Preparation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you do not have already access to OPAL, you can visit <a href="home">the download page</a>. In
+case OPAL is on your cluster please check with the administrator how to use. PSI user please click <a href="OPALATPSI">here</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_needed_input_files">Needed Input Files</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since this is separated EEX simulation, you will need 6D phase space information as an input by running the drive linac simulation. Here the initial particle distribution is provided as &#8220;partcl.data.&#8221; In addition, for this simulation, we need fieldmaps of transverse deflecting cavity (TDC) and dipole magnet.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Inputfile <a href="https://amas.web.psi.ch/wiki/AWAEEXBeamline/input.in">input.in</a></p>
+</li>
+<li>
+<p>Particle data <a href="https://amas.web.psi.ch/wiki/AWAEEXBeamline/partcl.data">partcl.data</a></p>
+</li>
+<li>
+<p>Tranvserse deflecting cavity (TDC) and dipole magnet field maps: <a href="https://amas.web.psi.ch/wiki/AWAEEXBeamline/TDC.dat">TDC.dat</a> and <a href="https://amas.web.psi.ch/wiki/AWAEEXBeamline/EEXDIP30cm.opal">EEXDIP30cm.opal</a>.</p>
+</li>
+<li>
+<p>Transverse mask: <a href="https://amas.web.psi.ch/wiki/AWAEEXBeamline/TriangularDrive_Witness.pbm">TriangularDrive_Witness.pbm</a></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_run_the_awa_drive_linac_simulation">Run the AWA drive linac simulation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Here, space charge and CSR calculations are turned off</p>
+</div>
+<div class="paragraph">
+<p><code>opal  input.in | tee input.out</code></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_results_and_postprocessing">Results and Postprocessing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://amas.web.psi.ch/wiki/AWAEEXBeamline/EEXbeamline_example.pdf">Results</a>
+A simple Python <a href="https://amas.web.psi.ch/wiki/AWAEEXBeamline/Opal_envelope_plot.py">script</a> not using pyOPALTools.
+For general post processing, please visit <a href="../postprocessing.html">the local postprocessing page</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2026-04-28 23:34:17 +0200
+</div>
+</div>
+</body>
+</html>

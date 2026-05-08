@@ -1,0 +1,109 @@
+ifdef::env-gitlab[]
+include::Manual.attributes[]
+include::env-gitlab.attributes[]
+{link_home}
+
+toc::[]
+endif::[]
+
+ifdef::backend-docbook5[:fig-width-default: scaledwidth=10cm]
+ifdef::backend-html5,env-gitlab[:fig-width-default: width=50%]
+
+[[chp.collisions]]
+== Physics Models Used in Modelling Collisions
+include::stylesheets/Toggle[]
+
+[[sec.collisions.intro]]
+=== Introduction
+
+opalx-begin
+
+This chapter documents the current collision model used by the `BEAMBEAM`
+element in _OPALX_.
+
+The present implementation is a reduced symmetric head-on collision
+model. It provides the interaction-window field solve and its
+associated mesh handling without yet introducing two independently
+tracked bunch objects.
+
+The current model therefore uses:
+
+1. one physical bunch, represented by the actual particle container,
+2. one virtual bunch, reconstructed from the physical bunch by symmetry about
+  the interaction point,
+3. an interaction-window field solve that is active only while the bunch
+  traverses the interval defined by the element length `L`.
+
+The model is entered when the head of the physical bunch reaches the
+beginning of the interaction window and is left once the tail of the
+bunch has passed the end of the window.
+opalx-end
+
+
+[[sec.collisions.ansatz]]
+=== Symmetric Counter-Propagating Ansatz
+
+opalx-begin
+Let latexmath:[z_\mathrm{IP}] denote the interaction-point position in
+the local beam coordinate system during the interaction-window solve.
+For a particle of the physical bunch with coordinates
+latexmath:[(x,y,z)] and momentum latexmath:[(p_x,p_y,p_z)], the
+virtual counter-propagating partner bunch is constructed by the
+symmetry transformation
+
+[latexmath]
+++++
+\begin{aligned}
+x'   &= x, \\
+y'   &= y, \\
+z'   &= 2 z_\mathrm{IP} - z,
+\end{aligned}
+\qquad
+\begin{aligned}
+p'_x &= p_x, \\
+p'_y &= p_y, \\
+p'_z &= -p_z.
+\end{aligned}
+++++
+
+This is the current head-on, fully symmetric ansatz. It assumes that
+the two bunches are identical up to the longitudinal mirror operation
+about the interaction point.
+opalx-end
+
+[[sec.collisions.mesh-model]]
+=== Mesh Model
+opalx-begin
+Outside the interaction window, the longitudinal field mesh remains
+bunch-following. In software-engineering terms, this is a
+Lagrangian-in-z representation of the field mesh.
+
+Inside the interaction window, the field mesh changes its meaning:
+
+* in latexmath:[x] and latexmath:[y], the mesh remains bunch-following,
+* in latexmath:[z], the mesh is frozen over the full interaction window.
+
+The longitudinal field mesh therefore becomes Eulerian in
+latexmath:[z], while the physical bunch itself continues to move
+through that fixed window. This distinction is important:
+
+* physical bunch bounds remain the actual particle bounds,
+* field-domain bounds in latexmath:[z] represent the fixed interaction window.
+opalx-end
+
+[[sec.collisions.scope]]
+=== Scope of the Current Model
+
+opalx-begin
+
+The present implementation should be interpreted as a first collision
+model for symmetric head-on beams. It is suitable for studying:
+
+* entry into and exit from the interaction window,
+* the switch from a bunch-following to a frozen longitudinal field mesh,
+* the self-field solve on that interaction-window mesh,
+* the symmetry-based reconstruction of the opposing bunch.
+
+It is not yet a full two-bunch strong-strong model with two independently
+tracked particle populations.
+opalx-end

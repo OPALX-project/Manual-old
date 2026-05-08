@@ -1,0 +1,78 @@
+ifdef::env-gitlab[]
+include::Manual.attributes[]
+include::env-gitlab.attributes[]
+{link_home}
+
+toc::[]
+endif::[]
+
+[[chp.geometry]]
+== Geometry
+include::stylesheets/Toggle[]
+
+At present the `GEOMETRY` command is still an *experimental feature*
+which is not to be used by the general user. It can be used to act as
+a terminator for particles that cross the geometry surface and to specify
+boundaries conditions for the `SAAMG` field solver. The command can be
+used in two modes:
+
+1.  specify a H5hut file holding the surface mesh of a complicated
+boundary geometry
+2.  use a predefined geometry: `ELLIPTIC`, `RECTANGULAR` or `BOXCORNER`
+
+[[sec.geometrycmd]]
+Geometry Command
+~~~~~~~~~~~~~~~~
+
+.Geometry command summary
+[[tab_GEOMETRY_Commands,Table {counter:tab-cnt}]]
+[cols="<1,<4,<1",options="header",]
+|==============================================================
+|Command        |Purpose                                            |Default Value
+|`GEOMETRY`     |Specify a geometry                                 |
+|`FGEOM`        |Specifies the geometry file, an H5hut file,
+                 containing the surface mesh of the geometry.       |
+|`LENGTH`       |The length of the specified geometry in [m].       |1.0
+|`TOPO`         |The topology of the geometry: `ELLIPTIC`,
+                 `RECTANGULAR` or `BOXCORNER`.
+                 If `FGEOM` is selected `TOPO` is overwritten.      |`ELLIPTIC`
+|`S`            |The start of the specified geometry in [m].        |1.0
+|`A`            |The semi-major axis of the ellipse or the half
+                 aperture of the rectangle (horizontally) in [m].   |0.025
+|`B`            |The semi-minor axis of the ellipse or the half
+                 aperture of the rectangle (vertically) in [m].     |0.025
+|`C`            |The height of the corner in [m]. `BOXCORNER` only. |0.01
+|`L1`           |The first part of the geometry with height `B`
+                 in [m]. `BOXCORNER` only.                          |0.5
+|`L2`           |The second part of the geometry with height
+                 `B`-`C` in [m]. `BOXCORNER` only.                  |0.2
+|`ZSHIFT`       |Shift in z direction.
+                 Only used with a H5hut geometry.                   |0.0
+|`XYZSCALE`     |Multiplicative scaling factor for coordinates.
+                 Only used with a H5hut geometry.                   |1.0
+|`XSCALE`       |Multiplicative scaling factor for x-coordinates.
+                 Only used with a H5hut geometry.                   |1.0
+|`YSCALE`       |Multiplicative scaling factor for y-coordinates.
+                 Only used with a H5hut geometry.                   |1.0
+|`ZSCALE`       |Multiplicative scaling factor for z-coordinates.
+                 Only used with a H5hut geometry.                   |1.0
+|`INSIDEPOINT`  |A point inside the geometry.
+                 Only used with a H5hut geometry.                   |
+|==============================================================
+
+An example of an elliptic geometry:
+
+----
+Name: GEOMETRY, TOPO=ELLIPTIC, LENGTH=1.0, A=0.005, B=0.005;
+----
+
+The geometry element must later be passed to the
+<<sec.fieldsolvers.fieldsolvercmd,`FIELDSOLVER` command>>.
+If only particle termination is desired, any solver can be used and
+it is not necessary to specify the geometry in the field solver command.
+
+In the <<sec.track.particles,`RUN` command>> the boundary geometry has
+always to be specified in order to load it and use it for particle termination.
+
+
+// EOF

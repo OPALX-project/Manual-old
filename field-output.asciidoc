@@ -1,0 +1,287 @@
+ifdef::env-gitlab[]
+include::Manual.attributes[]
+include::env-gitlab.attributes[]
+{link_home}
+
+toc::[]
+endif::[]
+
+[[chp.field_output]]
+== Field Output
+include::stylesheets/Toggle[]
+
+opal-begin
+There are two routines that can be used to write out the external field used in _OPAL-cycl_.
+
+DUMPFIELDS::
+  Write out static magnetic field map on a Cartesian grid
+DUMPEMFIELDS::
+  Write out electromagnetic field map on a 4D grid in space-time.
+  Cartesian and cylindrical grids are supported.
+  `DUMPEMFIELDS` is an extension of `DUMPFIELDS`.
+opal-end
+
+opalx-begin
+_OPALX_ supports a single command that writes out the external field to a file.
+
+DUMPEMFIELDS::
+  Write out electromagnetic field map on a 4D grid in space-time.
+  Cartesian and cylindrical grids are supported.
+opalx-end
+
+
+{nbsp} +
+
+[[sec.field_output.dumpfields]]
+[.feature-opal]
+=== DUMPFIELDS Command
+
+The `DUMPFIELDS` statement causes _OPAL-cycl_ to write out static magnetic
+field data on a 3D cartesian grid. The format of field output is:
+
+----
+<number of rows>
+1 x [m]
+2 y [m]
+3 z [m]
+4 Bx [kGauss]
+5 By [kGauss]
+6 Bz [kGauss]
+0
+<x0> <y0> <z0> <Bx0> <By0> <Bz0>
+<x1> <y1> <z1> <Bx1> <By1> <Bz1>
+...
+----
+
+The following attributes are enabled on the `DUMPFIELDS` statement:
+
+FILE_NAME::
+  Name of the file to which field data is dumped. It is an error if the
+  location reference by `FILE_NAME` cannot be opened. Any existing file
+  is overwritten.
+X_START::
+  Start point in the grid in x [m].
+DX::
+  Grid step size in x [m].
+X_STEPS::
+  Number of steps in x. It is an error if `X_STEPS` is non-integer or less than 1.
+Y_START::
+  Start point in the grid in y [m].
+DY::
+  Grid step size in y [m].
+Y_STEPS::
+  Number of steps in y. It is an error if `Y_STEPS` is non-integer or less than 1.
+Z_START::
+  Start point in the grid in z [m].
+DZ::
+  Grid step size in z [m].
+Z_STEPS::
+  Number of steps in z. It is an error if `Z_STEPS` is non-integer or less than 1.
+
+This example makes a field map in the midplane (x-y plane) only, starting at
+latexmath:[(x,y) = (0,0)] m, with 101 steps in each direction and a stride of 0.1m. z is always 0.
+----
+DUMPFIELDS, X_START=0., X_STEPS=101, DX=0.100,
+            Y_START=0., Y_STEPS=101, DY=0.100, 
+            Z_START=0., Z_STEPS=1, DZ=0.100, 
+            FILE_NAME="FieldMapXY.dat";
+----
+
+{nbsp} +
+{nbsp} +
+
+[[sec.field_output.dumpemfields]]
+=== DUMPEMFIELDS Command
+
+The `DUMPEMFIELDS` statement causes _OPAL-cycl_ to write out electromagnetic
+field data on a 4D grid. Grids in a Cartesian coordinate system latexmath:[(x,y,z,t)]
+and a cylindrical coordinate system about the z-axis in latexmath:[(r,\phi,z,t)] are supported.
+
+{nbsp} +
+
+==== Cartesian Mode
+
+In Cartesian mode the format of the field output is:
+opal-begin
+----
+<number of rows>
+1  x [m]
+2  y [m]
+3  z [m]
+4  t [ns]
+5  Bx [kGauss]
+6  By [kGauss]
+7  Bz [kGauss]
+8  Ex [MV/m]
+9  Ey [MV/m]
+10 Ez [MV/m]
+0
+<x0> <y0> <z0> <t0> <Bx0> <By0> <Bz0> <Ex0> <Ey0> <Ez0>
+<x1> <y1> <z1> <t1> <Bx1> <By1> <Bz1> <Ex1> <Ey1> <Ez1>
+...
+----
+opal-end
+opalx-begin
+----
+<number of rows>
+1  x [m]
+2  y [m]
+3  z [m]
+4  t [ns]
+5  Bx [T]
+6  By [T]
+7  Bz [T]
+8  Ex [MV/m]
+9  Ey [MV/m]
+10 Ez [MV/m]
+0
+<x0> <y0> <z0> <t0> <Bx0> <By0> <Bz0> <Ex0> <Ey0> <Ez0>
+<x1> <y1> <z1> <t1> <Bx1> <By1> <Bz1> <Ex1> <Ey1> <Ez1>
+...
+----
+opalx-end
+
+The following attributes are enabled on the `DUMPEMFIELDS` statement
+when operating in Cartesian mode:
+
+FILE_NAME::
+  Name of the file to which field data is dumped. It is an error if the
+  location referenced by `FILE_NAME` cannot be opened. Any existing file
+  is overwritten.
+COORDINATE_SYSTEM::
+  'CARTESIAN' must be set. The string is not case sensitive.
+  It is an error if the string is not one of 'CARTESIAN' or 'CYLINDRICAL'.
+X_START::
+  Start point in the grid in x [m].
+DX::
+  Grid step size in x [m].
+X_STEPS::
+  Number of steps in x.
+  It is an error if `X_STEPS` is non-integer or less than 1.
+Y_START::
+  Start point in the grid in y [m].
+DY::
+  Grid step size in y [m].
+Y_STEPS::
+  Number of steps in y.
+  It is an error if `Y_STEPS` is non-integer or less than 1.
+Z_START::
+  Start point in the grid in z [m].
+DZ::
+  Grid step size in z [m].
+Z_STEPS::
+  Number of steps in z.
+  It is an error if `Z_STEPS` is non-integer or less than 1.
+T_START::
+  Start point in the grid in time [ns].
+DT::
+  Grid step size in time [ns].
+T_STEPS::
+  Number of steps in time.
+  It is an error if `T_STEPS` is non-integer or less than 1.
+
+{nbsp} +
+
+==== Cylindrical Mode
+
+In Cylindrical mode the format of the field output is:
+opal-begin
+----
+<number of rows>
+1 r [m]
+2 phi [deg]
+3 z [m]
+4 t [ns]
+5 Br   [kGauss]
+6 Bphi [kGauss]
+7 Bz   [kGauss]
+8 Er   [MV/m]
+9 Ephi [MV/m]
+10 Ez  [MV/m]
+0
+<r0> <phi0> <z0> <t0> <Br0> <Bphi0> <Bz0> <Er0> <Ephi0> <Ez0>
+<r1> <phi1> <z1> <t1> <Br1> <Bphi1> <Bz1> <Er1> <Ephi1> <Ez1>
+...
+----
+opal-end
+opalx-begin
+----
+<number of rows>
+1 r [m]
+2 phi [deg]
+3 y [m]
+4 t [ns]
+5 Br   [T]
+6 Bphi [T]
+7 By   [T]
+8 Er   [MV/m]
+9 Ephi [MV/m]
+10 Ey  [MV/m]
+0
+<r0> <phi0> <y0> <t0> <Br0> <Bphi0> <By0> <Er0> <Ephi0> <Ey0>
+<r1> <phi1> <y1> <t1> <Br1> <Bphi1> <By1> <Er1> <Ephi1> <Ey1>
+...
+----
+opalx-end
+
+The following attributes are enabled on the `DUMPEMFIELDS` statement
+when operating in Cylindrical mode:
+
+FILE_NAME::
+  Name of the file to which field data is dumped. It is an error if the
+  location referenced by `FILE_NAME` cannot be opened. Any existing file
+  is overwritten.
+COORDINATE_SYSTEM::
+  'CYLINDRICAL' must be set. The string is not case sensitive.
+  It is an error if the string is not one of 'CARTESIAN' or 'CYLINDRICAL'.
+R_START::
+  Start point in the grid in r [m].
+DR::
+  Grid step size in r [m].
+R_STEPS::
+  Number of steps in r.
+  It is an error if `R_STEPS` is non-integer or less than 1.
+PHI_START::
+  Start point in the grid in phi [rad].
+DPHI::
+  Grid step size in phi [rad].
+PHI_STEPS::
+  Number of steps in phi.
+  It is an error if `PHI_STEPS` is non-integer or less than 1.
+opal-begin
+Z_START::
+  Start point in the grid in z [m].
+DZ::
+  Grid step size in z [m].
+Z_STEPS::
+  Number of steps in z.
+  It is an error if `Z_STEPS` is non-integer or less than 1.
+opal-end
+opalx-begin
+Y_START::
+Start point in the grid in y [m].
+DY::
+Grid step size in y [m].
+Y_STEPS::
+Number of steps in y.
+It is an error if `Y_STEPS` is non-integer or less than 1.
+opalx-end
+
+T_START::
+  Start point in the grid in time [ns].
+DT::
+  Grid step size in time [ns].
+T_STEPS::
+  Number of steps in time.
+  It is an error if `T_STEPS` is non-integer or less than 1.
+
+opalx-begin
+CYL_ORIGIN_X::
+  X coordinate of the origin of the cylindrical coordinate system [m]. Default is 0.
+CYL_ORIGIN_Y::
+  Y coordinate of the origin of the cylindrical coordinate system [m]. Default is 0.
+CYL_ORIGIN_Z::
+  Z coordinate of the origin of the cylindrical coordinate system [m]. Default is 0.
+opalx-end
+
+// EOF

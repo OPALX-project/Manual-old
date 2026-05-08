@@ -1,0 +1,59 @@
+++++
+<!-- Toggle bar -->
+<div class="feature-toggle">
+  <span>View:</span>
+  <label class="feature-choice feature-choice-opal">
+    <input type="radio" id="feature-mode-opal" name="feature-mode" value="opal" onchange="window.setFeatureMode && window.setFeatureMode(this.value)">
+    OPAL
+  </label>
+  <label class="feature-choice feature-choice-opalx">
+    <input type="radio" id="feature-mode-opalx" name="feature-mode" value="opalx" onchange="window.setFeatureMode && window.setFeatureMode(this.value)">
+    OPALX
+  </label>
+  <label class="feature-choice">
+    <input type="radio" id="feature-mode-both" name="feature-mode" value="both" checked onchange="window.setFeatureMode && window.setFeatureMode(this.value)">
+    Both
+  </label>
+</div>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'feature-mode';
+
+  function syncRadios(mode) {
+    var radios = document.querySelectorAll('.feature-toggle input[name="feature-mode"]');
+    radios.forEach(function (r) {
+      r.checked = (r.value === mode);
+    });
+  }
+
+  function setMode(mode) {
+    document.documentElement.setAttribute('data-feature-mode', mode);
+    syncRadios(mode);
+    try {
+      localStorage.setItem(STORAGE_KEY, mode);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  window.setFeatureMode = setMode;
+
+  var saved = null;
+  try {
+    saved = localStorage.getItem(STORAGE_KEY);
+  } catch (e) {}
+  setMode(saved || 'both');
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var radios = document.querySelectorAll('.feature-toggle input[name="feature-mode"]');
+    syncRadios(document.documentElement.getAttribute('data-feature-mode') || 'both');
+    radios.forEach(function (r) {
+      r.addEventListener('change', function (ev) {
+        window.setFeatureMode(ev.target.value);
+      });
+    });
+  });
+})();
+</script>
+++++

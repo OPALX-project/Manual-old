@@ -1,0 +1,7 @@
+:stem: latexmath
+:sectnums:
+:toc: macro
+:toclevels: 3
+
+:adoc: asciidoc
+:link_home: {baseurl}/Manual.{adoc}[Back to Main Page]

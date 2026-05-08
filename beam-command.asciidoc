@@ -1,0 +1,186 @@
+ifdef::env-gitlab[]
+include::Manual.attributes[]
+include::env-gitlab.attributes[]
+{link_home}
+
+toc::[]
+endif::[]
+
+ifdef::backend-docbook5[:fig-width-default: scaledwidth=10cm]
+ifdef::backend-html5,env-gitlab[:fig-width-default: width=50%]
+
+[[chp.beam-command]]
+== Beam Command
+include::stylesheets/Toggle[]
+
+All _OPAL_ commands working on a beam require the setting of various
+quantities related to this beam. These are entered by a `BEAM` command:
+
+opal-begin
+----
+label:BEAM, PARTICLE=name, MASS=real, CHARGE=real,
+      ENERGY=real, PC=real, GAMMA=real, BCURRENT=real,
+      NPART=real, BFREQ=real;
+----
+opal-end
+
+opalx-begin
+----
+label:BEAM, PARTICLE=name, MASS=real, CHARGE=real,
+      ENERGY=real, PC=real, GAMMA=real, BCURRENT=real,
+      NPART=real, BFREQ=real, SOURCES=name;
+----
+opalx-end
+
+The `label` is optional, it defaults to `UNNAMED_BEAM`.
+
+[[sec.beam-command.particle-definition]]
+=== Particle Definition
+
+The beam particle is defined by `PARTICLE` attribute, which includes a
+direct assignment of the particle mass and charge, as indicated below. The
+mass values are taken from Atomic Mass Data Center <<bib.amdc>> and Kinetic
+Database <<bib.kinetic_database>>. In the case of heavy ion beams, it is
+important to note that a specific type of fully ionized isotope are considered.
+The mass of the ions is calculated by subtracting the mass of the electrons and
+the binding energy <<bib.nist_database>> from the atomic mass. For other type
+of particle beams, this attribute must not be used. Instead, the particle beam
+is defined by means of `MASS` and `CHARGE` attributes specified by the user.
+
+PARTICLE:: The name of particles in the machine.
++
+_OPAL_ knows the mass (see <<sec.format.symbolic-constants,Predefined Symbolic Constants>>)
+and the charge for the following particles:
++
+  ELECTRON;;
+    The particles are electrons
+    (`MASS` = latexmath:[m_e], `CHARGE` = -1).
+  POSITRON;;
+    The particles are positrons
+    (`MASS` = latexmath:[m_e], `CHARGE` = +1).
+  MUON;;
+    The particles are of type muon
+    (`MASS` = latexmath:[m_\mu], `CHARGE` = -1).
+  PROTON;;
+    The particles are protons
+    (`MASS` = latexmath:[m_p], `CHARGE` = +1).
+  ANTIPROTON;;
+    The particles are anti-protons
+    (`MASS` = latexmath:[m_p], `CHARGE` = -1).
+  DEUTERON;;
+    The particles are of type deuteron
+    (`MASS` = latexmath:[m_d], `CHARGE` = +1).
+  HMINUS;;
+    The particles are negative hydrogen ions (latexmath:[H^-])
+    (`MASS` = latexmath:[m_{hm}], `CHARGE` = -1).
+  H2P;;
+    The particles are molecular hydrogen ions (latexmath:[H_2^+])
+    (`MASS` = latexmath:[m_{h2p}], `CHARGE` = +1).
+  ALPHA;;
+    The particles are of alpha particles
+    (`MASS` = latexmath:[m_{\alpha}], `CHARGE` = +2).
+  CARBON;;
+    The particles are fully-stripped carbon-12 ions
+    (`MASS` = latexmath:[m_c], `CHARGE` = +6).
+  XENON;;
+    The particles are fully-stripped xenon-129 ions
+    (`MASS` = latexmath:[m_{xe}], `CHARGE` = +54).
+  URANIUM;;
+    The particles are fully-stripped uranium-238 ions
+    (`MASS` = latexmath:[m_u], `CHARGE` = +92).
+
+opalx-begin
+  PHOTON;;
+    _OPALX_ predefined neutral massless particle
+    (`MASS` = 0, `CHARGE` = 0).
+opalx-end
+
+
+For other particle types one may enter:
+
+MASS::
+  The particle mass in GeV.
+CHARGE::
+  The particle charge expressed in elementary charges.
+
+[[sec.beam-command.beam-energy]]
+=== Beam Energy
+
+To specify the energy there are three attributes (in order of priority):
+
+GAMMA::
+  The particle energy divided by its mass.
+ENERGY::
+  The particle energy in GeV.
+PC::
+  The particle momentum in GeV/c.
+opalx-begin
++
+For `PARTICLE=PHOTON`, only `ENERGY` is allowed. `GAMMA`, `PC`, `MASS`, and
+`CHARGE` are rejected.
++
+For photon beams, _OPALX_ follows the CAIN beam convention and interprets the
+reference beam energy in `eV` rather than `GeV`. This matches CAIN's `BEAM`
+command, where the reference energy `E0` is specified in `eV`.
++
+So, for `PARTICLE=PHOTON`:
++
+* `ENERGY` is in `eV`,
+* `GAMMA` is not defined,
+* `PC` is not accepted at the `BEAM` level.
+opalx-end
+
+[[sec.beam-command.other-attributes]]
+=== Other Attributes
+
+The other attributes are:
+
+BFREQ::
+  The bunch frequency in MHz.
+BCURRENT::
+  The bunch current in A.
+  latexmath:[\mathrm{BCURRENT} = Q \times \mathrm{BFREQ}]
+  with latexmath:[Q] the total charge.
+NPART::
+  The number of macro particles for the simulations
+opalx-begin
+SOURCES::
+  _OPALX_ attribute naming the `EMISSIONSOURCELIST` used to initialise this
+  non-photon beam. Because the `BEAM` command validates the reference when it is defined,
+  the corresponding `EMISSIONSOURCE` and `EMISSIONSOURCELIST` objects must be
+  declared before the `BEAM` command.
++
+`SOURCES` is not allowed for `PARTICLE=PHOTON`.
+
+Photon beams are currently accepted only at the `BEAM` definition level. They
+are rejected by `TRACK` until OPALX gains photon transport support.
+opalx-end
+
+opalx-begin
+[[sec.beam-command.cain-photon-convention]]
+==== CAIN Photon-Energy Convention
+
+CAIN documents the beam reference energy as `E0` in `eV`. _OPALX_ adopts the
+same convention for `BEAM, PARTICLE=PHOTON`, so the photon-beam `ENERGY`
+attribute should be given in `eV`.
+opalx-end
+NSLICE::
+  The number of slices per bunch
+MOMENTUMTOLERANCE::
+  Fractional tolerance to deviations in the distribution compared to the
+  reference momentum at initialisation. If `MOMENTUMTOLERANCE` latexmath:[<=0],
+  no tolerance checking is done (default=1e-2).
+
+[[sec.beam.bibliography]]
+=== References
+
+anchor:bib.amdc[[{counter:bib-cnt}\]]
+<<bib.amdc>> M. Wang et al., https://iopscience.iop.org/article/10.1088/1674-1137/abddaf[_The AME 2020 atomic mass evaluation (II). Tables, graphs and references_], Chinese Phys. C, 45, 030003 (2021). Atomic Mass Data Center, https://www-nds.iaea.org/amdc/[_Atomic Mass Evaluation - AME2020_].
+
+anchor:bib.kinetic_database[[{counter:bib-cnt}\]]
+<<bib.kinetic_database>> https://kida.astrochem-tools.org/[_Kinetic Database for Astrochemistry_].
+
+anchor:bib.nist_database[[{counter:bib-cnt}\]]
+<<bib.nist_database>> https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html[_NIST Atomic Spectra Database Ionization Energies Form_], Atomic Spectra Database, NIST Standard Reference Database 78 (Version 5.9).
+
+// EOF

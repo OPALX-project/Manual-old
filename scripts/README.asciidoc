@@ -1,0 +1,122 @@
+= Translating the _OPAL_ manual to HTML and PDF
+:toc:
+
+== Introduction
+
+In this project we provide scripts to translate the _OPAL_ manual to HTML and PDF.
+The scripts are based on the following tools:
+
+* asciidoctor
+  https://asciidoctor.org
+* KaTeX plugin for asciidoctor to render HTML
+  https://github.com/jirutka/asciidoctor-katex
+* dblatex
+  http://dblatex.sourceforge.net
+
+== Install required software
+
+In this section you find recipes and recommendation to install the required software 
+on common operating system including various Linux distributions, macOS and
+Windows. The following steps are the same for all:
+
+1. Install Asciidoctor via package manager
+2. Install Node.js via package manager
+3. Install Asciidoctor KaTeX plugin as Ruby Gem
+4. Install dblatex if you want to translate to PDF
+
+=== macOS
+
+We recommend to use Macports or Homebrew to install the required software. Below
+is a recipe for Macports. 
+
+----
+sudo port install asciidoctor       # # <1>
+sudo port select --set ruby ruby24  # # <2>
+sudo port install nodejs12
+sudo gem install asciidoctor-katex
+sudo port install dblatex
+----
+<1> If not already installed, Ruby will be installed as dependency.
+<2> Select Ruby from Macports as default. Otherwise `/usr/bin/ruby` would be used.
+
+### Ubuntu 18+
+
+----
+sudo apt install asciidoctor
+sudo apt install nodejs
+sudo gem install asciidoctor-katex
+sudo apt install dblatex
+----
+
+### Fedora 31
+
+----
+sudo yum install rubygem-asciidoctor
+sudo yum install nodejs
+sudo gem install asciidoctor-katex 
+sudo yum install dblatex
+----
+
+### Redhat Enterprise Linux 7 and clones
+
+Installing the tool-chain for HTML on Redhat Enterprise Linux 7 or clones is less 
+straight forward since the Ruby version is too old. For the KaTeX plugin of 
+Asciidoctor Ruby 2.3+ is required but the OS provides 2.0 only. Newer Ruby versions
+are provided via the Software Collections. If you are not familiar with the Redhat
+Software Collections, compiling Ruby yourself might be the easiest solution.
+
+The recommended Ruby version is 2.4.x. Compiling Ruby version 2.5 or newer 
+fails without patches due to the too old GCC compiler. For downloading, compiling and
+installing Ruby please see https://www.ruby-lang.org
+
+In the following recipe we assume that you have a working Ruby installation in 
+`/usr/local/bin`:
+
+----
+sudo yum install nodejs
+sudo /usr/local/bin/gem install asciidoctor-katex # # <1>
+sudo yum install dblatex
+----
+<1> Installs Asciidoctor as Gem as dependency.
+
+### Redhat Enterprise Linux 8 and clones
+
+----
+sudo yum install nodejs
+sudo gem install asciidoctor-katex # # <1>
+sudo yum --enablerepo=PowerTools install dblatex # # <2>
+----
+
+<1> Install Asciidoctor and KaTeX plugin as Gem.
+<2> The PowerTools repository is **not** enabled by default!
+
+### openSUSE leap 15.x
+
+> **NOTE:** On openSUSE leap 15 PDF translation does not work out of the box 
+after installing the required packages. Please see documentation below!
+
+> **NOTE:** The Node.js version in openSUSE leap 15.1 is 10, leap 15.2 comes with
+version 12.
+
+----
+sudo zypper install ruby2.5-rubygem-asciidoctor
+sudo zypper install nodejs10                     # # <1>
+sudo gem install asciidoctor-katex
+sudo zypper install dblatex
+----
+<1> On openSUSE leap 15.2 use `nodejs12`.
+
+The style files of dblatex are not installed in the default LaTeX search path. 
+One easy solution is to configure this in your local texmf directory:
+
+----
+mkdir "$HOME/texmf/tex"                          # # <1>
+ln -s n /usr/share/dblatex "$HOME/texmf/tex"     # # <2>
+----
+<1> If your are unsure about the right directory check with `kpsewhich -var-value TEXMFHOME`
+<2> Set link to dblatex files
+
+### Windows10
+
+For the time being we recommend to use Windows Services for Linux with an 
+Ubuntu or openSUSE installation.

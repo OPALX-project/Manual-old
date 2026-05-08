@@ -1,0 +1,24 @@
+#!/bin/bash
+
+mydir=$(dirname "$0")
+mydir=$(cd "${mydir}" && pwd)
+srcdir=$(cd "${mydir}/.." && pwd)
+
+cd "${srcdir}" || exit 1
+
+declare -r input_fname="${1:-Manual.asciidoc}"
+declare -r extension_path="${srcdir}/extensions/feature_blocks.rb"
+
+# we have to set the revdate here. Otherwise asciidoctor uses
+# the timestamp of the source file.
+declare revdate=$(git log -1 --date=format:'%Y-%m-%d' --format=%cd)
+if grep -q '@REVDATE@' "${input_fname}"; then
+	sed -i.bak "s/@REVDATE@/${revdate}/" "${input_fname}" || exit $?
+	trap 'mv -f "${input_fname}.bak" "${input_fname}"' EXIT
+fi
+
+"${mydir}/fix_latexmath" || exit $?
+
+asciidoctor -r "${extension_path}" \
+  -a stylesheet=./stylesheets/readthedocs.css \
+  -d book "${input_fname}"

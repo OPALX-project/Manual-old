@@ -1,0 +1,1045 @@
+[#appendix-ics-gg]
+= OPALX Design Note: Laser--Electron ICS and gamma-gamma Collision Physics
+
+== Purpose
+
+This note proposes the next development step for OPALX after the implementation of the new weak--weak colliding-beam scheme with 3D space charge.
+
+The bigg picture is to have _photons_ as tracked particles and to add a reusable _discrete collision-process layer_ that can be attached to beam-beam element.
+
+The staged physics roadmap is:
+
+. photon species and photon-aware particle containers,
+. a generic collision-process API,
+. a dedicated `LASER` object and `LASERBEAM` element for inverse Compton scattering (ICS),
+. `GGLUMINOSITY` on top of the existing collision window,
+. `GGBREITWHEELER` for latexmath:[\gamma\gamma \to e^+e^-].
+
+This ordering is deliberate. In a photon collider, the laser conversion region and the latexmath:[\gamma\gamma] interaction point are physically distinct. The most useful first deliverable is therefore an in-code source-to-photon-beam model, followed by photon--photon luminosity, and only then by hard latexmath:[\gamma\gamma] event generation.
+
+== Why this is the right next cut
+
+The current OPALX manual already exposes the key ingredients needed for this design:
+
+* `TRACK` accepts `BEAMS={...}` and allocates one particle container per beam in the current OPALX multi-beam path.
+* `BEAMBEAM` already defines a collision window and a runtime transition into collision-specific logic.
+* `PARTICLEMATTERINTERACTION` and `ScatteringPhysics` provide an existing OPAL pattern for discrete physics with internal substepping.
+
+The important design point is that laser--electron Compton conversion and latexmath:[\gamma\gamma] reactions are _not_ new Poisson solves. They are stochastic reaction processes that must live on top of transport. So they should be implemented as a process layer attached to the interaction element, not buried inside the space-charge solver.
+
+== Alignment with the current OPALX code and manual
+
+The proposed design is intentionally aligned with the current public OPALX interfaces and with the interaction-point work in PR #300.
+
+=== Manual-visible anchor points
+
+The public manual currently states:
+
+* `TRACK` in OPALX accepts `BEAM` or `BEAMS`, and if `BEAMS` is present it takes precedence.
+* the current public `BEAMBEAM` documentation still describes the mirrored-bunch prototype and marks the copy sketch as not yet implemented.
+* `BEAM` provides predefined charged species such as `ELECTRON` and `POSITRON`, but there is no predefined `PHOTON` species.
+* `ScatteringPhysics` in the particle-matter interaction model already uses internal substeps when the outer step is too large.
+
+=== PR #300 implementation anchor points
+
+PR #300 also suggests a natural insertion point for this work:
+
+* runtime control sits in `ParallelTracker.cpp` and `PartBunch.cpp`,
+* the tracker owns lifecycle and lab-frame logic,
+* the bunch owns field-mesh and scatter mechanics,
+* diagnostics are already separated from the core state,
+* an HDF5 writer already emits per-step field metadata and latexmath:[\rho]/latexmath:[E] products.
+
+== Path ... 
+
+Implement a generic `CollisionPhysics` layer and a true `PHOTON` species first, then build `LASERCOMPTON` on a dedicated `LASERBEAM` element, then add `GGLUMINOSITY`, and only after that add `GGBREITWHEELER`.
+
+== Scope of version 1
+
+Version 1 should target the _linear / weakly nonlinear_ ICS regime with an _analytic laser pulse_.
+
+Version 1 should include:
+
+* photon transport,
+* variable macro-particle weights,
+* photon polarization as Stokes data,
+* laser--electron Thomson/Compton scattering,
+* photon output beams,
+* latexmath:[\gamma\gamma] luminosity histograms,
+* Breit--Wheeler pair creation.
+
+Version 1 should _not_ attempt:
+
+* full-wave laser fields,
+* strong-field nonlinear Compton,
+* laser interference effects between multiple coherent laser pulses,
+* a general-purpose latexmath:[\gamma\gamma] event-generator framework,
+* full cascade physics.
+
+== Proposed public API
+
+=== New objects
+
+I recommend adding three user-facing objects:
+
+* `LASER`
+* `COLLISIONPHYSICS`
+* `LASERBEAM`
+
+and extending `BEAMBEAM` with a process list.
+
+=== Suggested input syntax
+
+[source]
+----
+// Electron beams
+EL: BEAM, PARTICLE = ELECTRON, PC = P0L, NPART = nL, BFREQ = rf, BCURRENT = iL, SOURCES = srcL;
+ER: BEAM, PARTICLE = ELECTRON, PC = P0R, NPART = nR, BFREQ = rf, BCURRENT = iR, SOURCES = srcR;
+
+// Photon beams created by ICS
+GL: BEAM, PARTICLE = PHOTON, NPART = 0;
+GR: BEAM, PARTICLE = PHOTON, NPART = 0;
+
+// Optional e+/e- output beams from gamma-gamma events
+EP: BEAM, PARTICLE = POSITRON, NPART = 0;
+EM: BEAM, PARTICLE = ELECTRON, NPART = 0;
+
+// Analytic laser pulses
+LASL: LASER, MODEL = GAUSSIAN,
+      WAVELENGTH = 1.03e-6,
+      PULSEENERGY = 1.0,
+      PULSELENGTH = 2.0e-12,
+      WAISTX = 5.0e-6, WAISTY = 5.0e-6,
+      DIR = {0, 0, -1},
+      STOKES = {0, 0, 1},
+      PROFILE = GAUSS;
+
+LASR: LASER, MODEL = GAUSSIAN,
+      WAVELENGTH = 1.03e-6,
+      PULSEENERGY = 1.0,
+      PULSELENGTH = 2.0e-12,
+      WAISTX = 5.0e-6, WAISTY = 5.0e-6,
+      DIR = {0, 0, +1},
+      STOKES = {0, 0, 1},
+      PROFILE = GAUSS;
+
+// Discrete physics handlers
+ICSL: COLLISIONPHYSICS, TYPE = LASERCOMPTON,
+      LASER = LASL,
+      PRODUCTBEAM = GL,
+      MODEL = KLEINNISHINA,
+      POLARIZATION = TRUE,
+      PMAX = 0.05,
+      MODE = WEIGHTED_SPLIT;
+
+ICSR: COLLISIONPHYSICS, TYPE = LASERCOMPTON,
+      LASER = LASR,
+      PRODUCTBEAM = GR,
+      MODEL = KLEINNISHINA,
+      POLARIZATION = TRUE,
+      PMAX = 0.05,
+      MODE = WEIGHTED_SPLIT;
+
+GGLUM: COLLISIONPHYSICS, TYPE = GGLUMINOSITY,
+       BEAMS = {GL, GR},
+       NBIN = 200,
+       WMIN = 1.0e6,
+       WMAX = 5.0e11,
+       HELICITY = TRUE;
+
+BW: COLLISIONPHYSICS, TYPE = GGBREITWHEELER,
+    BEAMS = {GL, GR},
+    PRODUCTS = {EM, EP},
+    PMAX = 0.02,
+    MODE = WEIGHTED_EVENT;
+
+// Conversion regions
+LBL: LASERBEAM, ELEMEDGE = s_conv_l, L = 0.003, PHYSICS = ICSL;
+LBR: LASERBEAM, ELEMEDGE = s_conv_r, L = 0.003, PHYSICS = ICSR;
+
+// Gamma-gamma IP
+IP1: BEAMBEAM, ELEMEDGE = s_ip, L = 0.002, PROCESSES = (GGLUM, BW);
+
+TRACK, LINE = myLine, BEAMS = {EL, ER, GL, GR, EM, EP},
+       DT = {dt1, dt2}, MAXSTEPS = {n1, n2};
+RUN, METHOD = "PARALLEL", FIELDSOLVER = FS1;
+ENDTRACK;
+----
+
+== Required data-model extensions
+
+=== 1. Photon species
+
+Add `PHOTON` as a proper particle species.
+
+A photon macro-particle should carry at least:
+
+* position,
+* direction unit vector,
+* energy,
+* weight latexmath:[w],
+* Stokes four-component vector (intensity and polarization state),
+* creation time,
+* parent ID,
+* generation index,
+* alive flag.
+
+Photons should:
+
+* drift at latexmath:[c] in straight lines unless a dedicated process modifies them,
+* not deposit charge into space-charge solvers,
+* participate in collision estimators and reaction processes,
+* be writable to the standard OPALX HDF5 diagnostics.
+
+=== 2. Variable macro-particle weights
+
+This is the most important enabling change.
+
+The ICS probability per substep is usually small. If all reactions are treated as unweighted Bernoulli events,
+photon statistics will be poor unless the electron macro-particle count is extremely large. A weighted reaction mode is therefore essential.
+
+Every particle species should support a floating-point weight latexmath:[w].
+
+=== 3. Polarization metadata
+
+Store photon polarization as Stokes data:
+
+[latexmath]
+++++
+\mathbf{S} = (S_0, S_1, S_2, S_3), \qquad S_0 \ge 0, \qquad S_1^2 + S_2^2 + S_3^2 \le S_0^2 .
+++++
+
+For circular-helicity luminosity, latexmath:[S_3] is the key quantity.
+
+== Runtime architecture
+
+=== Design rule
+
+Keep collective fields and discrete reactions separate.
+
+* collective fields stay in the current beam / field-solver path,
+* discrete reactions are handled by a process stack attached to `LASERBEAM` or `BEAMBEAM`,
+* each process owns its own substepping logic and random-number consumption.
+
+=== Suggested class layout
+
+==== Public objects
+
+* `Laser.h`, `LaserRep.h`, `OpalLaser.h`
+* `LaserBeam.h`, `LaserBeamRep.h`, `OpalLaserBeam.h`
+* `CollisionPhysics.h`, `CollisionPhysicsRep.h`, `OpalCollisionPhysics.h`
+
+==== Runtime / process layer
+
+* `DiscreteCollisionProcess` (abstract)
+* `LaserComptonProcess`
+* `GammaGammaLuminosityProcess`
+* `GammaGammaBreitWheelerProcess`
+
+==== Diagnostics
+
+* `H5LaserBeamDiagnosticsWriter`
+* `H5GammaGammaDiagnosticsWriter`
+
+=== Process interface
+
+[source]
+----
+class DiscreteCollisionProcess {
+public:
+    virtual double suggestDtMax(const CollisionContext& ctx) const = 0;
+    virtual void apply(CollisionContext& ctx, double dt_sub) = 0;
+    virtual void writeDiagnostics(const CollisionContext& ctx) = 0;
+    virtual ~DiscreteCollisionProcess() = default;
+};
+----
+
+=== Suggested tracker call pattern
+
+[source]
+----
+advanceOneGlobalStep(dt):
+    advanceExternalAndCollectiveFields(dt)     ! existing OPALX path
+
+    for each active collision element:
+        ctx = buildCollisionContext(...)
+        dt_sub = min_over_processes(process.suggestDtMax(ctx))
+        n_sub = ceil(dt / dt_sub)
+        dt_sub = dt / n_sub
+
+        repeat k = 1 .. n_sub:
+            for process in active_processes:
+                process.apply(ctx, dt_sub)
+
+        for process in active_processes:
+            process.writeDiagnostics(ctx)
+----
+
+== Physics models
+
+=== Photon transport
+
+In version 1, photons are free-streaming between discrete interactions.
+
+[latexmath]
+++++
+\frac{d\mathbf{x}}{dt} = c\,\hat{\mathbf{n}},
+\qquad
+\frac{d\hat{\mathbf{n}}}{dt} = 0,
+\qquad
+\frac{dE_\gamma}{dt} = 0.
+++++
+
+The step update is therefore simply:
+
+[latexmath]
+++++
+\mathbf{x}_{n+1} = \mathbf{x}_n + c\,\hat{\mathbf{n}}\,\Delta t.
+++++
+
+=== Analytic laser model
+
+Adopt a Gaussian pulse as the default model.
+
+Following the same product structure used in CAIN, define the local laser power density as
+
+[latexmath]
+++++
+P(\tau,\xi,\eta,\zeta) = P_0\,F_t(\tau-\zeta)\,F_s(\xi,\eta,\zeta).
+++++
+
+For OPALX version 1, use
+
+[latexmath]
+++++
+F_t = \exp\!\left[-\frac{(t-t_0-z/c)^2}{2\sigma_t^2}\right],
+++++
+
+and an elliptical Gaussian transverse profile
+
+[latexmath]
+++++
+F_s = \frac{w_{0x}}{w_x(z)}\frac{w_{0y}}{w_y(z)}
+\exp\!\left[-2\frac{x^2}{w_x^2(z)} - 2\frac{y^2}{w_y^2(z)}\right],
+++++
+
+with
+
+[latexmath]
+++++
+w_{x,y}(z) = w_{0x,y}\sqrt{1+\frac{z^2}{z_{R,x,y}^2}},
+\qquad
+z_{R,x,y} = \frac{\pi w_{0x,y}^2}{\lambda_L}.
+++++
+
+The local photon number density is then
+
+[latexmath]
+++++
+n_\gamma(\mathbf{x},t) = \frac{P(\mathbf{x},t)}{\hbar\omega_L c},
+\qquad
+\omega_L = \frac{2\pi c}{\lambda_L}.
+++++
+
+This is the quantity needed by the ICS collision kernel.
+
+=== Laser--electron inverse Compton scattering
+
+==== Rest-frame kinematics
+
+The cleanest implementation is to evaluate the scattering in the rest frame of the incident charged particle.
+
+Let the incoming laser photon in the particle rest frame have energy latexmath:[E'_i = \hbar\omega'_i].
+
+For Thomson scattering, the collision is elastic:
+
+[latexmath]
+++++
+E'_f = E'_i.
+++++
+
+For Compton scattering, the scattered photon energy is
+
+[latexmath]
+++++
+E'_f = \frac{E'_i}{1 + \epsilon'(1-\cos\theta')},
+\qquad
+\epsilon' = \frac{E'_i}{m c^2}.
+++++
+
+The outgoing electron recoil follows from 4-momentum conservation:
+
+[latexmath]
+++++
+p_e'^\mu + k_i'^\mu = p_f'^\mu + k_f'^\mu.
+++++
+
+After the event is sampled in the rest frame, both outgoing 4-vectors are boosted back to the lab frame.
+
+==== Useful lab-frame edge formula
+
+For a head-on collision and forward observation, the familiar Compton edge is
+
+[latexmath]
+++++
+E_{\gamma,\max} \simeq \frac{4\gamma^2 E_L}{1 + 4\gamma E_L/(m c^2)}.
+++++
+
+In the Thomson limit latexmath:[4\gamma E_L \ll m c^2], this reduces to
+
+[latexmath]
+++++
+E_{\gamma,\max} \simeq 4\gamma^2 E_L.
+++++
+
+A useful small-angle approximation for the emitted photon energy is
+
+[latexmath]
+++++
+E_\gamma(\theta) \simeq \frac{4\gamma^2 E_L}{1 + 4\gamma E_L/(m c^2) + \gamma^2\theta^2}.
+++++
+
+==== Differential cross-sections
+
+===== Thomson, unpolarized
+
+[latexmath]
+++++
+\frac{d\sigma_T}{d\Omega} = \frac{r_e^2}{2}(1+\cos^2\theta),
+\qquad
+\sigma_T = \frac{8\pi}{3} r_e^2,
+++++
+
+with latexmath:[r_e = e^2/(4\pi\epsilon_0 m_e c^2)].
+
+===== Klein--Nishina, unpolarized
+
+[latexmath]
+++++
+\frac{d\sigma_{KN}}{d\Omega}
+=
+\frac{r_e^2}{2}
+\left(\frac{\omega_f'}{\omega_i'}\right)^2
+\left[
+\frac{\omega_f'}{\omega_i'} + \frac{\omega_i'}{\omega_f'} - \sin^2\theta'
+\right],
+++++
+
+with
+
+[latexmath]
+++++
+\frac{\omega_f'}{\omega_i'} = \frac{1}{1 + \epsilon'(1-\cos\theta')}.
+++++
+
+===== Klein--Nishina, linearly polarized
+
+[latexmath]
+++++
+\frac{d\sigma_{KN}^{\mathrm{pol}}}{d\Omega}
+=
+\frac{r_e^2}{2}
+\left(\frac{\omega_f'}{\omega_i'}\right)^2
+\left[
+\frac{\omega_f'}{\omega_i'} + \frac{\omega_i'}{\omega_f'} - 2\sin^2\theta'\cos^2\phi'
+\right].
+++++
+
+This is sufficient for a practical polarized ICS implementation in version 1.
+
+==== Interaction probability
+
+Compute the interaction probability in the particle rest frame:
+
+[latexmath]
+++++
+\lambda' = \frac{1}{n_\gamma'\,\sigma_{\mathrm{tot}}},
+\qquad
+P_{\mathrm{int}} = 1 - \exp\!\left(-\frac{\Delta \ell'}{\lambda'}\right),
+++++
+
+where latexmath:[n_\gamma'] is the local rest-frame laser photon density and latexmath:[\Delta \ell' = c\,\Delta t'].
+
+When latexmath:[P_{\mathrm{int}} \ll 1], use weighted splitting by default.
+
+=== gamma-gamma luminosity
+
+==== Invariant mass and threshold variable
+
+For two photons with 4-momenta latexmath:[k_1^\mu] and latexmath:[k_2^\mu], the invariant mass is
+
+[latexmath]
+++++
+W = \sqrt{s},
+\qquad
+s = (k_1 + k_2)^2 = 2 k_1\cdot k_2.
+++++
+
+In terms of photon energies and crossing angle latexmath:[\psi],
+
+[latexmath]
+++++
+s = 2 E_1 E_2 (1-\cos\psi) / c^2,
+++++
+
+or in natural units latexmath:[c=1],
+
+[latexmath]
+++++
+s = 2 E_1 E_2 (1-\cos\psi).
+++++
+
+==== Local luminosity density
+
+For local photon number densities latexmath:[n_1] and latexmath:[n_2], the local luminosity density is
+
+[latexmath]
+++++
+\mathcal{L}(\mathbf{x},t) = n_1(\mathbf{x},t)\,n_2(\mathbf{x},t)\,c\,(1-\cos\psi).
+++++
+
+The total luminosity is therefore
+
+[latexmath]
+++++
+L_{\gamma\gamma}(t) = \int \mathcal{L}(\mathbf{x},t)\,d^3x.
+++++
+
+==== Histogram estimator on the collision mesh
+
+For a cell of volume latexmath:[V_c] and timestep latexmath:[\Delta t], an exact pairwise estimator is
+
+[latexmath]
+++++
+\Delta L_c(W_b) =
+\sum_{i\in c}\sum_{j\in c}
+\frac{w_i w_j}{V_c}
+\,c(1-\cos\psi_{ij})\,\Delta t
+\;\mathbf{1}_{W_{ij}\in b}.
+++++
+
+This provides a direct path to differential luminosity latexmath:[dL/dW].
+
+==== Helicity-resolved luminosity
+
+If photon circular polarizations are tracked, accumulate separate histograms for the usual helicity combinations.
+For nearly collinear beams, a practical binning is
+
+[latexmath]
+++++
+L^{J_z=0} \propto \frac{1}{2}L\,(1 + \lambda_1\lambda_2),
+\qquad
+L^{J_z=2} \propto \frac{1}{2}L\,(1 - \lambda_1\lambda_2),
+++++
+
+with latexmath:[\lambda_i] the circular helicities derived from the Stokes data.
+
+=== Breit--Wheeler pair creation
+
+==== Threshold and total cross-section
+
+The first hard latexmath:[\gamma\gamma] reaction should be the Breit--Wheeler process
+
+[latexmath]
+++++
+\gamma + \gamma \to e^- + e^+.
+++++
+
+The threshold is
+
+[latexmath]
+++++
+s \ge 4 m_e^2 c^4.
+++++
+
+Define
+
+[latexmath]
+++++
+\beta = \sqrt{1 - \frac{4m_e^2 c^4}{s}}.
+++++
+
+The unpolarized total cross-section is
+
+[latexmath]
+++++
+\sigma_{BW}(s) = \frac{\pi r_e^2}{2}(1-\beta^2)
+\left[
+(3-\beta^4)\ln\!\frac{1+\beta}{1-\beta}
+- 2\beta(2-\beta^2)
+\right].
+++++
+
+==== Event-rate estimator
+
+For a pair of photon macro-particles latexmath:[(i,j)] in the same collision cell, the expected event weight over one substep is
+
+[latexmath]
+++++
+\mu_{ij} = \frac{w_i w_j}{V_c}
+\,\sigma_{BW}(s_{ij})\,c(1-\cos\psi_{ij})\,\Delta t.
+++++
+
+This quantity is usually much smaller than one, which is why a weighted event mode is numerically attractive.
+
+==== Outgoing pair kinematics
+
+In the two-photon center-of-momentum frame,
+
+[latexmath]
+++++
+E_* = \frac{W}{2},
+\qquad
+p_* = \frac{W}{2c}\,\beta.
+++++
+
+The pair is then generated back-to-back in the CM frame and boosted to the lab frame.
+
+For version 1, the differential angular sampler should be implemented as a pluggable strategy:
+
+* `ISOTROPIC_DEBUG` for algorithm debugging,
+* `BW_EXACT_UNPOL` for production use with a tabulated or analytic differential kernel,
+* `BW_POLARIZED` as a later extension.
+
+== Monte Carlo algorithms
+
+=== Common substepping rule
+
+Each process should determine its own maximal safe substep from a user control such as `PMAX`.
+
+The principle is simple:
+
+[latexmath]
+++++
+\max_i P_i(\Delta t_{sub}) \le P_{max}.
+++++
+
+For ICS, a conservative bound is
+
+[latexmath]
+++++
+\Delta t_{sub} \le
+\frac{P_{max}}{n'_{\gamma,\max}\,\sigma_{\max}\,c}.
+++++
+
+This mirrors the existing `ScatteringPhysics` idea in OPAL: large outer steps are allowed, but reaction physics subdivides them internally.
+
+=== Monte Carlo mode choices
+
+Every reaction process should support at least two numerical modes:
+
+* `STOCHASTIC` -- true Bernoulli / Poisson event generation,
+* `WEIGHTED_*` -- deterministic-weight event creation for low-probability collisions.
+
+Recommended defaults:
+
+* ICS: `WEIGHTED_SPLIT`
+* Breit--Wheeler: `WEIGHTED_EVENT`
+
+=== ICS Monte Carlo: weighted-split formulation
+
+==== Event semantics
+
+For an electron macro-particle with weight latexmath:[w_e] and interaction probability latexmath:[P], define the scattered weight
+
+[latexmath]
+++++
+w_{sc} = w_e P,
+\qquad
+w_{unsc} = w_e (1-P).
+++++
+
+Then:
+
+* keep the parent or parent-like survivor with weight latexmath:[w_{unsc}],
+* create one scattered photon child with weight latexmath:[w_{sc}],
+* optionally create a recoiled electron child with weight latexmath:[w_{sc}] if exact branching semantics are desired,
+* otherwise update the parent momentum in-place by the weighted mean recoil and carry the scattered branch as a child.
+
+The branch-preserving version is cleaner and easier to validate.
+
+==== Pseudocode
+
+[source]
+----
+applyLaserCompton(ctx, dt_sub):
+    electrons = ctx.primaryBeam
+    photonsOut = ctx.productBeam
+    laser = ctx.laser
+
+    parallel for each electron macro-particle e:
+        if not e.alive:
+            continue
+
+        ! 1. Sample local laser state at electron position and time
+        laserState = laser.evaluate(e.position, ctx.time)
+        if laserState.n_gamma <= 0:
+            continue
+
+        ! 2. Build average incoming laser-photon 4-vector in lab
+        k_lab = laserState.meanPhotonFourVector
+
+        ! 3. Boost to electron rest frame
+        boost = restFrameBoost(e.fourMomentum)
+        k_rf = boost.apply(k_lab)
+        n_rf = boostPhotonDensity(laserState.n_gamma, e.velocity, laserState.direction)
+        dt_rf = boostTimeStep(dt_sub, e.velocity)
+
+        ! 4. Decide Thomson vs Compton model
+        eps = k_rf.energy / (m_e * c^2)
+        if ctx.model == THOMSON or eps << 1:
+            sigma_tot = sigmaThomson()
+            diffKernel = ThomsonKernel(laserState.stokes, ctx.polarization)
+        else:
+            sigma_tot = sigmaKleinNishinaTotal(eps)
+            diffKernel = KleinNishinaKernel(eps, laserState.stokes, ctx.polarization)
+
+        ! 5. Interaction probability
+        P = 1 - exp(-n_rf * sigma_tot * c * dt_rf)
+        if P <= 0:
+            continue
+
+        if ctx.mode == STOCHASTIC:
+            didScatter = (uniform() < P)
+            w_sc = e.weight if didScatter else 0
+            if not didScatter:
+                continue
+        else:
+            w_sc = e.weight * P
+            if w_sc < ctx.weightCut:
+                continue
+            e.weight = e.weight - w_sc
+
+        ! 6. Sample scattering angles in the rest frame
+        (theta_rf, phi_rf) = sampleFromDifferentialKernel(diffKernel)
+
+        ! 7. Solve outgoing photon/electron kinematics in rest frame
+        kf_rf, pf_rf = solveComptonFinalState(k_rf, theta_rf, phi_rf, m_e)
+
+        ! 8. Boost products back to lab
+        kf_lab = boost.inverse().apply(kf_rf)
+        pf_lab = boost.inverse().apply(pf_rf)
+
+        ! 9. Create scattered photon
+        gamma = makePhoton(kf_lab, weight = w_sc, stokes = transportStokes(...), parent = e.id)
+        photonsOut.append(gamma)
+
+        ! 10. Update scattered electron branch
+        if ctx.mode == STOCHASTIC:
+            e.fourMomentum = pf_lab
+        else:
+            child = cloneElectronFrom(e)
+            child.weight = w_sc
+            child.fourMomentum = pf_lab
+            ctx.secondaryElectrons.append(child)
+----
+
+=== Angle sampling for ICS
+
+The simplest robust sampler is rejection sampling in latexmath:[(\cos\theta,\phi)].
+
+[source]
+----
+sampleFromDifferentialKernel(kernel):
+    repeat:
+        mu  = uniform(-1, +1)           ! mu = cos(theta)
+        phi = uniform(0, 2*pi)
+        val = kernel(mu, phi)
+        if uniform(0, kernel.maxValue) < val:
+            return (acos(mu), phi)
+----
+
+For production runs, the better option is a pre-tabulated CDF in latexmath:[\mu = \cos\theta] and conditional sampling in latexmath:[\phi].
+
+=== gamma-gamma luminosity Monte Carlo
+
+==== Exact pairwise estimator
+
+Use exact pair loops inside each collision cell when the population is small enough.
+
+[source]
+----
+applyGammaGammaLuminosity(ctx, dt_sub):
+    bins = ctx.histW
+
+    for each collision cell c:
+        A = photonsRightInCell(c)
+        B = photonsLeftInCell(c)
+        V = cellVolume(c)
+
+        if A.empty or B.empty:
+            continue
+
+        for i in A:
+            for j in B:
+                W = invariantMass(i, j)
+                flux = c * (1 - dot(i.dir, j.dir))
+                dL = (i.weight * j.weight / V) * flux * dt_sub
+                bins.accumulate(W, dL)
+
+                if ctx.helicity:
+                    binsJz0.accumulate(W, dL * 0.5 * (1 + helicity(i) * helicity(j)))
+                    binsJz2.accumulate(W, dL * 0.5 * (1 - helicity(i) * helicity(j)))
+----
+
+==== Importance-sampled pair estimator
+
+When latexmath:[N_A N_B] is too large, replace the exact pair loop with importance sampling.
+
+Let
+
+[latexmath]
+++++
+W_A = \sum_{i\in A} w_i,
+\qquad
+W_B = \sum_{j\in B} w_j.
+++++
+
+Draw pairs with probabilities
+
+[latexmath]
+++++
+p_i = \frac{w_i}{W_A},
+\qquad
+q_j = \frac{w_j}{W_B}.
+++++
+
+Then each sampled pair contributes the unbiased luminosity estimator
+
+[latexmath]
+++++
+\widehat{\Delta L}
+=
+\frac{W_A W_B}{N_{samp} V_c}
+\,c(1-\cos\psi_{ij})\,\Delta t.
+++++
+
+Pseudocode:
+
+[source]
+----
+applyGammaGammaLuminositySampled(ctx, dt_sub):
+    for each collision cell c:
+        A = photonsRightInCell(c)
+        B = photonsLeftInCell(c)
+        if A.empty or B.empty:
+            continue
+
+        if A.size * B.size <= ctx.pairExactMax:
+            processExactly(A, B)
+            continue
+
+        buildAliasTable(A, weights = w_i / sum_wA)
+        buildAliasTable(B, weights = w_j / sum_wB)
+
+        for s = 1 .. ctx.nPairSamples:
+            i = sampleAlias(A)
+            j = sampleAlias(B)
+            W = invariantMass(i, j)
+            flux = c * (1 - dot(i.dir, j.dir))
+            dL = (sum_wA * sum_wB / ctx.nPairSamples / Vc) * flux * dt_sub
+            bins.accumulate(W, dL)
+----
+
+=== Breit--Wheeler Monte Carlo
+
+==== Weighted-event mode
+
+This should be the default for version 1.
+
+[source]
+----
+applyBreitWheeler(ctx, dt_sub):
+    photonsA = ctx.beamA
+    photonsB = ctx.beamB
+    outMinus = ctx.productElectronBeam
+    outPlus  = ctx.productPositronBeam
+
+    for each collision cell c:
+        A = photonsA.inCell(c)
+        B = photonsB.inCell(c)
+        V = cellVolume(c)
+
+        if A.empty or B.empty:
+            continue
+
+        pairIterator = chooseExactOrSampledPairIterator(A, B, ctx)
+
+        for each sampled pair (i, j, coeff) in pairIterator:
+            s = invariantS(i, j)
+            if s < 4 * m_e^2 * c^4:
+                continue
+
+            sigma = sigmaBreitWheeler(s)
+            flux  = c * (1 - dot(i.dir, j.dir))
+            mu    = coeff * sigma * flux * dt_sub / V
+
+            if mu <= ctx.weightCut:
+                continue
+
+            cm = buildCenterOfMomentumFrame(i, j)
+            (thetaStar, phiStar) = sampleBWAngle(ctx.angularModel, s)
+            eMinusCM, ePlusCM = buildBackToBackPair(cm.W, thetaStar, phiStar)
+            eMinusLab = cm.inverseBoost(eMinusCM)
+            ePlusLab  = cm.inverseBoost(ePlusCM)
+
+            outMinus.append(makeElectron(eMinusLab, weight = mu, parent = pairID(i,j)))
+            outPlus.append(makePositron(ePlusLab, weight = mu, parent = pairID(i,j)))
+----
+
+==== Stochastic mode
+
+A true event mode is still useful for validation.
+
+[source]
+----
+if ctx.mode == STOCHASTIC:
+    P = min(mu / w_ref, 1)
+    if uniform() < P:
+        create pair with child weight = w_ref
+----
+
+where latexmath:[w_{ref}] is a user-chosen reference event weight. This keeps the expected produced weight equal to latexmath:[\mu].
+
+== Numerical choices and defaults
+
+=== Collision mesh reuse
+
+Reuse the existing collision-window mesh introduced for `BEAMBEAM`.
+
+The mesh is already the natural place for:
+
+* collision-space diagnostics,
+* photon binning,
+* local density estimates,
+* luminosity accumulation,
+* pair-generation bookkeeping.
+
+=== Recommended defaults
+
+[cols="2,4"]
+|===
+|Setting | Recommendation
+
+|Photon transport
+|Straight drift, no self-field deposition
+
+|ICS mode
+|`WEIGHTED_SPLIT`
+
+|gamma-gamma luminosity
+|Exact cell pairing below a threshold, sampled pairing above it
+
+|Breit--Wheeler mode
+|`WEIGHTED_EVENT`
+
+|Substep control
+|`PMAX = 0.01 .. 0.05`
+
+|Polarization in v1
+|Store and propagate Stokes vectors; accumulate helicity luminosity
+|===
+
+== Diagnostics
+
+The existing HDF5 pattern from PR #300 should be extended, not replaced.
+
+=== `H5LaserBeamDiagnosticsWriter`
+
+Write per element exit and optionally per substep:
+
+* total scattered photon weight,
+* photon energy histogram,
+* photon angle histogram,
+* photon transverse phase space,
+* Stokes histograms,
+* scattered-electron energy loss histogram,
+* local laser overlap statistics.
+
+=== `H5GammaGammaDiagnosticsWriter`
+
+Write:
+
+* latexmath:[L_{\gamma\gamma}(W)] histogram,
+* helicity-separated histograms,
+* optional 2D latexmath:[(E_1,E_2)] luminosity histogram,
+* event counts and total produced pair weight,
+* pair kinematics,
+* parent-child references for debugging,
+* cellwise overlap summaries.
+
+== Validation matrix
+
+=== Milestone A: photon species and weights
+
+* photon drift in vacuum,
+* zero Lorentz force,
+* weight conservation in append / copy / restart,
+* HDF5 read-write checks.
+
+=== Milestone B: `LASERBEAM` + ICS
+
+* Thomson-limit Compton edge against latexmath:[E_{\gamma,\max} \simeq 4\gamma^2 E_L],
+* Compton-edge test with recoil included,
+* energy-angle correlation,
+* polarized azimuthal asymmetry,
+* benchmark against RF-Track and CAIN for at least one compact ICS case.
+
+=== Milestone C: gamma-gamma luminosity
+
+* symmetry under beam exchange,
+* head-on monochromatic-photon toy model,
+* histogram stability versus cell size,
+* code-to-code comparison of latexmath:[L_{\gamma\gamma}(W)] against CAIN.
+
+=== Milestone D: Breit--Wheeler
+
+* threshold behavior at latexmath:[W = 2m_e c^2],
+* total-rate comparison against the analytic latexmath:[\sigma_{BW}(s)],
+* pair-energy and pair-angle checks,
+* regression tests for exact versus sampled cell pairing.
+
+== Suggested first PR scope
+
+Keep the next PR narrow.
+
+. add `PHOTON` species support,
+. add particle weights and photon Stokes storage,
+. add `LASER` command,
+. add `LASERBEAM` element,
+. implement linear / polarized `LASERCOMPTON`,
+. write photon diagnostics to HDF5.
+
+That PR gives OPALX the single capability every later latexmath:[\gamma\gamma] feature depends on: physically meaningful photon beams produced inside OPALX.
+
+The next PR after that should be `GGLUMINOSITY`, followed by `GGBREITWHEELER`.
+
+== Notes on accuracy and staged extensions
+
+=== Why not strong-field QED in version 1
+
+The weakly nonlinear or linear ICS regime already covers the immediate collider-conversion use case and can be validated cleanly against established tools.
+
+A later extension can add:
+
+* nonlinear Compton,
+* multi-harmonic emission,
+* nonlinear Breit--Wheeler,
+* optional coupling to a full-wave model where justified.
+
+=== Why the collision-process layer should remain generic
+
+Once implemented, the same framework can host:
+
+* beamstrahlung-like discrete photon emission,
+* trident processes,
+* pair cascades,
+* external-target interactions,
+* detector-like conversion layers.
+
+== References
+
+. OPALX Manual, sections on `BEAMBEAM`, `TRACK`, `BEAM`, `PARTICLEMATTERINTERACTION`, and `UNDULATOR`.
+. OPALX PR #300, interaction-point runtime structure and diagnostics.
+. A. Latina and V. Mus, "An Inverse-Compton Scattering Simulation Module for RF-Track," FLS2023, paper TU4P33.
+. K. Yokoya et al., _User's Manual of CAIN_, version 2.44.

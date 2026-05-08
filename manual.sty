@@ -1,0 +1,105 @@
+%
+% style file to render the OPAL manual with dblatex
+%
+% purpose:
+% - override cover page macro
+% - override 2. page with authors and revisions
+%
+
+
+\RequirePackageWithOptions{docbook}
+
+% Reduce noisy hyperlink warnings in large generated PDFs.
+\hypersetup{hypertexnames=false,bookmarks=false}
+
+% Keep bookmark strings readable when section titles include TeX/math commands.
+\pdfstringdefDisableCommands{%
+  \def\gamma{gamma}%
+  \def\textemdash{-}%
+}
+
+% enumerate figures and table from 1 to n, indeepending from the chapter
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+
+% redefine cover page
+\def\DBKcover{
+  \pagenumbering{gobble}
+  \ifthenelse{\equal{\DBKedition}{}}{\def\edhead{}}{\def\edhead{Ed. \DBKedition}}
+
+  % interligne double
+  \setlength{\oldbaselineskip}{\baselineskip}
+  \setlength{\baselineskip}{2\oldbaselineskip}
+  \textsf{
+    \vfill
+    \vspace{2.5cm}
+    \begin{center}
+      \huge{\textbf{\DBKtitle}}\\ %
+      \ifx\DBKsubtitle\relax\else%
+        \underline{\ \ \ \ \ \ \ \ \ \ \ }\\ %
+        \ \\ %
+        \huge{\textbf{\DBKsubtitle}}\\ %
+      \fi
+    \end{center}
+    \vfill
+    \setlength{\baselineskip}{\oldbaselineskip}
+    \hspace{1cm}
+    \vspace{1cm}
+    \begin{center}
+      \begin{tabular}{p{7cm} p{7cm}}
+        \Large{\DBKreference{} \edhead} & \\
+      \end{tabular}
+   \end{center}
+  }
+  % Format for the other pages
+  \newpage
+  \setlength{\baselineskip}{\oldbaselineskip}
+  \lfoot[]{}
+}
+
+% second page with list of authors, date and logos
+\def\DBKdomitete{
+  \pagenumbering{roman}
+  \setcounter{page}{2}
+  \begin{sffamily}
+  \writtenby
+
+  \DBKauthor
+
+  \DBKrevdate
+
+  \DBKdate
+  \end{sffamily}
+
+  \vfill
+
+  % confirmed
+  \includegraphics[height=10mm]{logos/psi_logo.png}
+
+  % confirmed
+  \includegraphics[height=12mm]{logos/ciemat_logo.jpg}
+
+  % confirmed
+  \includegraphics[height=9mm]{logos/SLAC-lab-hires.png}
+
+  % confirmed
+  \includegraphics[height=10mm]{logos/UKRI_STF_logo.png}
+
+  % confirmed
+  \includegraphics[height=8.4mm]{logos/MIT-logo-with-spelling-design1-large-black-red.eps}
+ 
+  % confirmed
+  \includegraphics[height=10mm]{logos/Logo_FZ_Juelich_1561x454_rgb_jpg.jpg}
+
+  % confirmed
+  \includegraphics[height=13mm]{logos/St_Andrews_logo.png}
+
+  % confirmed
+  \includegraphics[height=13mm]{logos/NIU_horz_3Clr.png}
+
+  %
+  %\includegraphics[height=10.5mm]{logos/oxford_logo.png}
+
+  %\Includegraphics[height=8.4mm]{logos/LANL_logo.png}
+}

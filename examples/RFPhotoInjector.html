@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.26">
+<title>RF Photo Injector</title>
+<style>
+
+</style>
+</head>
+<body class="book">
+<div id="header">
+<h1>RF Photo Injector</h1>
+</div>
+<div id="content">
+<h1 id="_introduction" class="sect0">Introduction</h1>
+<div class="openblock partintro">
+<div class="content">
+<div class="paragraph">
+<p>This example describes a rf-photo injector, as part of the Argonne Wakefield Accelerator (AWA). The model based on the <a href="http://vrws.de/napac2016/papers/thpoa46.pdf">paper</a> by N.R. Neveu et al.,  and benchmarks three codes: GPT, ASTRA and OPAL.</p>
+</div>
+<div class="paragraph">
+<p>Here we will run the rf-photo injector (OPAL_t)</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_preparation">Preparation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you do not have already access to OPAL, you can visit <a href="home">the download page</a>. In
+case OPAL is on your cluster please check with the administrator how to use. PSI user please click <a href="OPALATPSI">here</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_needed_input_files">Needed Input Files</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For this project we need input files, that you obtain by clicking on links below:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Inputfile <a href="https://amas.web.psi.ch/wiki/RFphotoinjector/RFphotoinjector.in">RFphotoinjector.in</a></p>
+</li>
+<li>
+<p>Two solenoid field maps: <a href="https://amas.web.psi.ch/wiki/RFphotoinjector/M_440.T7">M_440.T7</a> and <a href="https://amas.web.psi.ch/wiki/RFphotoinjector/BF_550.T7">BF_550.T7</a></p>
+</li>
+<li>
+<p>RF gun field map <a href="https://amas.web.psi.ch/wiki/RFphotoinjector/DriveGun.T7">DriveGun.T7</a></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_run_the_photo_injector_simulation">Run the Photo Injector Simulation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For this calculation the initial conditions are all set in the input file. Run OPAL with</p>
+</div>
+<div class="paragraph">
+<p><code>opal  RFphotoinjector.in | tee RFphotoinjector.out</code></p>
+</div>
+<div class="paragraph">
+<p>For postprocessing visit <a href="../postprocessing.html">the local postprocessing page</a>.
+The results for the case with a 32^3 mesh and 1E5 macro particles are shown in the following figures:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://amas.web.psi.ch/wiki/RFphotoinjector/figures/wikitest5mNoMinStep.png" alt="RFphoto5mNoMinStep">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://amas.web.psi.ch/wiki/RFphotoinjector/figures/wikitestNoMinStep.png" alt="RFphotoNoMinStep">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2026-04-28 23:34:17 +0200
+</div>
+</div>
+</body>
+</html>

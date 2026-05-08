@@ -1,0 +1,44 @@
+#!/bin/bash
+
+fix_math() {
+	local fname="$1"
+	local -i in_mathblock=0
+
+	local sed_expr=''
+
+	# remove white-space at the EOL
+	sed_expr+='s/[[:space:]]*$//;'
+
+	# enclose math in '$'
+	sed_expr+='s/\\]/__ESCAPED_SBRACKET__/g;'
+	sed_expr+='s/latexmath:\[\([^]]*\)\]/latexmath:[$\1$]/g;'
+	sed_expr+='s/__ESCAPED_SBRACKET__/\\]/g;'
+
+	# fixlinks to other files in the wiki 
+	sed_expr+='s/link:[^#]*#\([^[]*\)\[\([^]]*\)\]/<<\1,\2>>/g;'
+
+	cat "${fname}" | \
+		sed "${sed_expr}" | \
+		while IFS= read -r line; do
+			if [[ "$line" != "++++" ]]; then
+				echo "${line}"
+			elif [[ "$line" == "++++" ]] && (( in_mathblock == 0 )); then
+				echo "${line}"
+				echo "\["
+				in_mathblock=1
+			elif [[ "$line" == "++++" ]] && (( in_mathblock == 1 )); then
+				echo "\]"
+				echo "${line}"
+				in_mathblock=0
+			fi
+		done \
+		> "${fname%.*}.adoc"
+}
+
+for f in *.asciidoc; do
+	basename="${f/.asciidoc}"
+	if [[ "$f" -nt "${basename}.adoc" ]]; then
+		fix_math "$f"
+	fi
+done
+

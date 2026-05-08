@@ -1,0 +1,788 @@
+ifdef::env-gitlab[]
+include::Manual.attributes[]
+include::env-gitlab.attributes[]
+{link_home}
+
+toc::[]
+endif::[]
+
+[[chp.control]]
+== Control Statements
+include::stylesheets/Toggle[]
+
+[[getting-help]]
+=== Getting Help
+
+[[sec.control.help]]
+==== HELP Command
+
+A user who is uncertain about the attributes of a command should try the
+command `HELP`, which has three formats:
+
+----
+HELP;                 // Give help on the "HELP" command
+HELP,NAME=label;      // List funct. and attr. types of
+                      // "label"
+HELP,label;           // Shortcut for the second format
+----
+
+`label` is an identifier (see <<sec.format.label,Identifiers or Labels>>).
+If it is non-blank, _OPAL_ prints the function of the object `label` and lists
+its attribute types. Entering `HELP` alone displays help on the `HELP` command.
+
+Examples:
+
+----
+HELP;
+HELP,NAME=FIELDSOLVER;
+HELP,FIELDSOLVER;
+----
+
+[[sec.control.stop]]
+=== STOP / QUIT Statement
+
+The statement
+
+----
+STOP or QUIT;
+----
+
+terminates execution of the _OPAL_ program, or, when the statement occurs
+in a `CALL` file (see <<sec.control.call>>), returns to the calling file.
+Any statement following the `STOP` or `QUIT` statement is ignored.
+
+[[sec.control.option]]
+=== OPTION Statement
+
+The `OPTION` command controls global command execution and sets a few global
+quantities. Each of the settings options are listed in <<tab_Options_Defaults>>
+with their corresponding default values.
+
+----
+OPTION, VERSION=integer, ECHO=logical,INFO=logical,TRACE=logical,
+        WARN=logical, SEED=real, PSDUMPFREQ=integer,
+        STATDUMPFREQ=integer, SPTDUMFREQ=integer,
+        REPARTFREQ=integer, REBINFREQ=integer, TELL=logical;
+----
+
+opalx-begin
+In _OPALX_, the `OPTION` statement also provides storage-related options such as
+`QM_MODE`.
+opalx-end
+
+VERSION::
+  Used to indicate for which version of _OPAL_ the input file is
+  written. The major and minor versions of _OPAL_ and of the input file
+  have to match. The patch version of _OPAL_ must be greater or equal to
+  the patch version of the input file. If the version doesn’t fulfill
+  above criteria _OPAL_ stops immediately and prints instructions on how
+  to convert the input file. Starting with version 1.6.0 of _OPAL_ the option
+  `VERSION` is mandatory in the _OPAL_ input file. The format is `Mmmpp` where
+  `M` stands for the major, `m` for the minor and `p` for the patch version.
+  For version 1.6.0 of _OPAL_ `VERSION` should read `10600`.
+
+The next five logical flags activate or deactivate execution options:
+
+ECHO::
+  Controls printing of an echo of input lines on the standard error
+  file. Its default value is false.
+INFO::
+  If this option is turned off, _OPAL_ suppresses all information
+  messages. It also affects the _gnu.out_ and _eb.out_ files in case of
+  _OPAL-cycl_ simulations
+  (see <<sec.opalcycl.fields-maps-1,_OPAL-cycl_ output field maps>>).
+  The level of information showed is controlled with `--info` command line
+  (see <<tab_CommandLineArg>>) Its default value is true.
+TELL::
+  If true, the current option settings are listed. Must be the last option in
+  the input file in order to render correct results. Its default value is false.
+TRACE::
+  If true, print execution trace. Must be the first option in the 
+  inputfile in order to render correct results. Its default value is false.
+WARN::
+  If this option is turned off, _OPAL_ suppresses all warning messages.
+  Its default value is true.
+
+The remaining options (ordered alphabetically) are used to control
+diverse _OPAL_ features:
+
+AMR::
+  Enable adaptive mesh refinement (see <<sec.fieldsolvers.AMR,`AMR` Solver>>).
+  Its default value is false.
+AMR_REGRID_FREQ::
+  Defines after how many steps an <<sec.fieldsolvers.AMR,`AMR`>>
+  regrid is performed. Its default value is 10.
+AMR_YT_DUMP_FREQ::
+  The frequency to dump grid and particle data for <<sec.fieldsolvers.AMR,`AMR`>>.
+  Its default value is 10.
+ASCIIDUMP::
+  If true, instead of HDF5, ASCII output is generated for the following
+  elements: Collimator, Geometry, Monitor, Probe, Stripper, 
+  Vacuum and global losses. Its default value is false.
+AUTOPHASE::
+  Defines how accurate the search for the phase at which the maximal energy
+  is gained should be. The higher this number the more accurate the phase
+  will be. If it is set to 0 then the auto-phasing algorithm isn't
+  run. Its default value is 6.
+BEAMHALOBOUNDARY::
+  Defines in terms of sigma where the halo starts. Only used in _OPAL-cycl_.
+  Its default value is 0.0.
+opalx-begin
+BOUNDPDESTROY::
+  Governs how many sigmas away particles are deleted. Its default
+  value is 10.
+opalx-end
+opal-begin
+BOUNDPDESTROYFQ::
+  The frequency to delete particles which are too far away from the
+  center of beam. Only used in _OPAL-cycl_. Its default value is 10.
+opal-end
+CLOTUNEONLY::
+  If set to true, stop after closed orbit finder and tune calculation.
+  Only used in _OPAL-cycl_. Its default value is false.
+COMPUTEPERCENTILES::
+  If true, the 68 (1 sigmas for normal distribution), the 95 (2 sigmas),
+  the 99.7 (3 sigmas) and the 99.99 (4 sigmas) percentiles of the bunch
+  size and the normalized emittance are calculated. The data are stored
+  into _.stat_ output file and loss file in HDF5 format (_.h5_). The
+  calculation is performed whenever the number of particles exceeds 100.
+  Its default value is false.
+CSRDUMP::
+  If true the electric csr field component, latexmath:[E_z], line
+  density and the derivative of the line density is written into the
+  _data_ directory. The first line gives the average position of the
+  beam bunch. Subsequent lines list latexmath:[z] position of
+  longitudinal mesh (with respect to the head of the beam bunch),
+  latexmath:[E_z], line density and the derivative of the line
+  density. Note that currently the line density derivative needs to be
+  scaled by the inverse of the mesh spacing to get the correct value.
+  The CSR field is dumped at each time step of the calculation. Each
+  text file is named "Bend Name" (from input file) + "-CSRWake"
+  + "time step number in that bend (starting from 1)" + ".txt".
+  Its default value is false.
+CZERO::
+  If true the distributions are generated such that the centroid is
+  exactly zero and not statistically dependent. Its default value is false.
+DELPARTFREQ::
+  The frequency to delete particles in _OPAL-cycl_. Its default value is 1.
+DUMPBEAMMATRIX::
+  If true, the 6-dimensional beam matrix (upper triangle only) is stored
+  in the statistics output file (_.stat_). Its default value is false.
+EBDUMP::
+  If true the electric and magnetic field on the particle is saved each
+  time a phase space is written. Its default value is false.
+ENABLEHDF5::
+  If true (default), HDF5 read and write is enabled.
+ENABLEVTK::
+  If true (default), VTK write of geometry voxel mesh is enabled.
+HALOSHIFT::
+  Constant parameter to shift halo value. Its default value is 0.0.
+IDEALIZED::
+  Instructs to use the hard edge model for the calculation of the path
+  length in _OPAL-t_. The path length is computed to place the elements
+  in the three-dimensional space from `ELEMEDGE`. Its default value is false.
+LOGBENDTRAJECTORY::
+  Save the reference trajectory inside dipoles in an ASCII file. For
+  each dipole a separate file is written to the directory _data/_.
+  Its default value is false.
+MEMORYDUMP::
+  If true, it writes the memory consumption of every core to a SDDS file
+  (_.mem_). The write frequency corresponds to `STATDUMPFREQ`.
+  Its default value is false.
+MINBINEMITTED::
+  The number of bins that have to be emitted before the bin are squashed 
+  into a single bin. Its default value is 10.
+MINSTEPFORREBIN::
+  The number of steps into the simulation before the bins are squashed 
+  into a single bin. This should be used instead of the global variable 
+  of the same name. Its default value is 200.
+MTSSUBSTEPS::
+  Only used for multiple-time-stepping (`MTS`) integrator in _OPAL-cycl_.
+  Specifies how many sub-steps for external field integration are done
+  per step. Making less steps per turn and increasing this value is the
+  recommended way to reduce space charge solve frequency.
+  Its default value is 1.
+NLHS::
+  Number of stored old solutions for extrapolating the new starting
+  vector. Default value is 1 and just the last solution is used.
+NUMBLOCKS::
+  Maximum number of vectors in the Krylov space for `ITSOLVER=CG` or `ITSOLVER=GMRES`
+  (see <<sec.fieldsolvers.fieldsolvercmd,`FIELDSOLVER` command>>).
+  Its default value is 0.
+PSDUMPFREQ::
+  Defines after how many time steps the phase space is dumped into the H5hut
+  file (_.h5_). It also controls the frequency of phase space printed on the
+  standard output. Its default value is 10.
+[.feature-opalx]                                                                                        
+====
+In case `PSDUMPFREQ<0` no hdf5 output is created. Note, the file is however appearing but empty.
+====
+PSDUMPEACHTURN::
+  Control option of phase space dumping. If true, dump phase space after
+  each turn. For the time being, this is only use for multi-bunch
+  simulation in _OPAL-cycl_. Its default value is false.
+PSDUMPFRAME::
+  Control option that defines the frame in which the phase space data is
+  written for _.h5_ and _.stat_ files.  Beware that the data is written in a
+  given time step. Most accelerator physics quantities are defined at a given
+  s-step where s is distance along the reference trajectory. For
+  non-isochronous accelerators, particles at a given time step can be quite a
+  long way away from the reference particle, yielding unexpected results.
+  Currently only available for _OPAL-cycl_. In _OPAL-t_ the phase-space is always
+  written in the frame of the reference particle.
+  * `GLOBAL`: data is written in the global Cartesian frame;
+  * `BUNCH_MEAN`: data is written in the bunch mean frame or;
+  * `REFERENCE`: data is written in the frame of the reference particle.
+opalx-begin
+QM_MODE::
+  Controls how particle charge and mass are stored internally in _OPALX_.
+  This option does not change the physics model by itself, but it changes the
+  storage layout and memory footprint of the particle container.
+  * `SINGLE`: store one shared charge value and one shared mass value per
+    particle container. This is the default and uses the least memory.
+  * `ATTRIBUTES`: store charge and mass as per-particle attributes. Use this
+    mode when particles in the same container need to carry different charge
+    or mass values.
+opalx-end
+REBINFREQ::
+  Defines after how many time steps we update the energy Bin ID of each
+  particle. For the time being. Only available for multi-bunch
+  simulation in _OPAL-cycl_. Its default value is 100.
+RECYCLEBLOCKS::
+  Number of vectors in the recycle space for `ITSOLVER=CG` or `ITSOLVER=GMRES`
+  (see <<sec.fieldsolvers.fieldsolvercmd,`FIELDSOLVER` command>>).
+  Its default value is 0.
+REMOTEPARTDEL::
+  Artificially delete remote particles if their distances to the beam
+  centroid is larger than `REMOTEPARTDEL` times of the beam rms size.
+  In _OPAL-t_ only the longitudinal component of the particles is considered.
+  In _OPAL-cycl_ all components are considered if the the value is negative
+  (further on using its absolute value) and only the transverse components if
+  the value is positive. Its default value is 0.0, i.e. no particles are deleted.
+REPARTFREQ::
+  Defines after how many time steps we do particles repartition to
+  balance the computational load of the computer nodes. Its default
+  value is 10.
+RHODUMP::
+  If true the scalar latexmath:[\rho] field is saved each time a phase
+  space is written. There exists a reader in Visit with versions greater
+  or equal 1.11.1. Its default value is false.
+RNGTYPE::
+  The name (see <<sec.format.astring,String Attributes>>) of a random
+  number generator can be provided. The default random number generator
+  (RANDOM) is a portable 48-bit generator. Three quasi random generators are
+  available: `HALTON`, `SOBOL` and `NIEDERREITER`. For details see the GSL
+  reference manual (18.5).
+SCSOLVEFREQ::
+  If the space charge field is slowly varying w.r.t. external fields,
+  this option allows to change the frequency of space charge
+  calculation, i.e. the space charge forces are evaluated every
+  `SCSOLVEFREQ` step and then reused for the following steps. Affects
+  integrators `LF2` and `RK4` of _OPAL-cycl_. Its default value is 1.
+  Note: as the multiple-time-stepping (`MTS`) integrator maintains
+  accuracy much better with reduced space charge solve frequency, this
+  option should probably not be used anymore.
+SEED::
+  Selects a particular sequence of random values. A `SEED` value is an
+  integer in the range [0...999999999] (default: 123456789). `SEED` can be
+  an expression. If `SEED` latexmath:[=] -1, the time is used as seed
+  and the generator is not portable anymore. See also <<sec.format.adefer,Deferred Expressions and Random Values>>.
+SPTDUMPFREQ::
+  Defines after how many time steps we dump the phase space of single
+  particle in _OPAL-cycl_. It is always useful to record the trajectory
+  of reference particle or some specified particle for primary study.
+  Its default value is 1.
+STATDUMPFREQ::
+  Defines after how many time steps we dump statistical data, such as
+  RMS beam emittance, to the _.stat_ file. Its default value is 10.
+
+.Default settings for Options
+[[tab_Options_Defaults,Table {counter:tab-cnt}]]
+[cols="<,<,<,<,<,<",]
+|=======================================================================
+|`AMR`               |= `FALSE`
+|`AMR_REGRID_FREQ`   |= `10`
+|`AMR_YT_DUMP_FREQ`  |= `10`
+|`ASCIIDUMP`         |= `FALSE`
+|`AUTOPHASE`         |= `6`
+|`BEAMHALOBOUNDARY`  |= `0.0`
+|`BOUNDPDESTROYFQ`   |= `10`
+|`CLOTUNEONLY`       |= `FALSE`
+|`COMPUTEPERCENTILES`|= `FALSE`
+|`CSRDUMP`           |= `FALSE`
+|`CZERO`             |= `FALSE`
+|`DELPARTFREQ`       |= `1`
+|`DUMPBEAMMATRIX`    |= `FALSE`
+|`EBDUMP`            |= `FALSE`
+|`ECHO`              |= `FALSE`
+|`ENABLEHDF5`        |= `TRUE`
+|`ENABLEVTK`         |= `TRUE`
+|`HALOSHIFT`         |= `0.0`
+|`IDEALIZE`          |= `FALSE`
+|`INFO`              |= `TRUE`
+|`LOGBENDTRAJECTORY` |= `FALSE`
+|`MEMORYDUMP`        |= `FALSE`
+|`MINBINEMITTED`     |= `10`
+|`MINSTEPFORREBIN`   |= `200`
+|`MTSSUBSTEPS`       |= `1`
+|`NLHS`              |= `1`
+|`NUMBLOCKS`         |= `0`
+|`PSDUMPEACHTURN`    |= `FALSE`
+|`PSDUMPFRAME`       |= `GLOBAL`
+|`PSDUMPFREQ`        |= `10`
+|`QM_MODE`           |= `SINGLE` (_OPALX_)
+|`RECYCLEBLOCKS`     |= `0`
+|`REBINFREQ`         |= `100`
+|`REMOTEPARTDEL`     |= `0.0`
+|`REPARTFREQ`        |= `10`
+|`RHODUMP`           |= `FALSE`
+|`RNGTYPE`           |= `RANDOM`
+|`SCSOLVEFREQ`       |= `1`
+|`SEED`              |= `123456789`
+|`SPTDUMPFREQ`       |= `1`
+|`STATDUMPFREQ`      |= `10`
+|`TELL`              |= `FALSE`
+|`TRACE`             |= `FALSE`
+|`VERSION`           |= `none`
+|`WARN`              |= `TRUE`
+|=======================================================================
+
+[[sec.consumption.parameter]]
+=== Parameter Statements
+
+[[sec.control.variable]]
+==== Variable Definitions
+
+_OPAL_ recognizes several types of variables.
+
+[[sec.control.real-scalar-variables]]
+===== Real Scalar Variables
+
+----
+REAL variable-name=real-expression;
+----
+
+For backward compatibility the program also accepts the form
+
+----
+REAL variable-name:=real-expression;
+----
+
+This statement creates a new global variable `variable-name` and
+discards any old variable with the same name. Its value depends on all
+quantities occurring in real-expression (see <<sec.format.areal,Real Expressions>>).
+Whenever an operand changes in `real-expression`, a new value is calculated.
+The definition may be thought of as a mathematical equation. However, _OPAL_
+is not able to solve the equation for a quantity on the right-hand side.
+
+An assignment in the sense of the FORTRAN or C languages can be achieved
+by using the `EVAL` function (see <<sec.control.eval>>).
+
+A reserved variable is the value `P0` which is used as the global
+reference momentum for normalizing all magnetic field coefficients.
+Example:
+
+----
+REAL GEV=100;
+P0=GEV;
+----
+
+Circular definitions are not allowed:
+
+----
+X=X+1;    // X cannot be equal to X+1
+REAL A=B;
+REAL B=A; // A and B are equal, but of unknown value
+----
+
+However, redefinitions by assignment are allowed:
+
+----
+X=EVAL(X+1);
+----
+
+[[sec.control.real-vector-variables]]
+===== Real Vector Variables
+
+----
+REAL VECTOR variable-name=vector-expression;
+----
+
+In old version of _OPAL_ (before 1.6.0) the keyword `REAL` was optional,
+now it is mandatory!
+
+This statement creates a new global variable `variable-name` and
+discards any old variable with the same name. Its value depends on all
+quantities occurring in vector-expression (see <<sec.format.anarray,Arrays>>)
+on the right-hand side. Whenever an operand changes in `vector-expression`, a
+new value is calculated. The definition may be thought of as a
+mathematical equation. However, _OPAL_ is not able to solve the equation
+for a quantity on the right-hand side.
+
+Example:
+
+----
+REAL VECTOR A = TABLE(10, #);
+REAL VECTOR B = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+----
+
+Circular definitions are not allowed, but redefinitions by assignment
+are allowed.
+
+[[sec.control.logical-variables]]
+===== Logical Variables
+
+----
+BOOL variable-name=logical-expression;
+----
+
+This statement creates a new global variable `variable-name` and
+discards any old variable with the same name. Its value depends on all
+quantities occurring in logical-expression (see <<sec.format.alogical,Logical Expressions>>).
+Whenever an operand changes in `logical-expression`, a new value is
+calculated. The definition may be thought of as a mathematical equation.
+However, _OPAL_ is not able to solve the equation for a quantity on the
+right-hand side.
+
+Example:
+
+----
+BOOL FLAG = X != 0;
+----
+
+Circular definitions are not allowed, but redefinitions by assignment
+are allowed.
+
+[[sec.control.constant]]
+==== Symbolic Constants
+
+_OPAL_ recognizes a few build-in built-in mathematical and physical
+constants (see <<tab_constant>>).
+Additional constants can be defined by the command
+
+----
+REAL CONST label:CONSTANT=<real-expression>;
+----
+
+which defines a constant with the name `label`. The keyword `REAL` is
+optional, and `label` must be unique. An existing symbolic constant can
+never be redefined. The `real-expression` is evaluated at the time the
+`CONST` definition is read, and the result is stored as the value of the
+constant.
+
+Example:
+
+----
+CONST IN=0.0254; // conversion of inches to meters
+----
+
+[[sec.control.vector]]
+==== Vector Values
+
+A vector of expressions is established by a statement
+
+----
+REAL VECTOR vector-name=vector-expression;
+----
+
+The keyword `REAL` is optional. It creates a new global vector
+`vector-name` and discards any old vector with the same name. Its value
+depends on all quantities occurring in vector-expression
+(see <<sec.format.anarray,Arrays>>). Whenever an operand changes in
+`vector-expression`, a new value is calculated. The definition may be
+thought of as a mathematical equation. However, _OPAL_ is not able to
+solve the equation for a quantity on the right-hand side.
+
+Example:
+
+----
+VECTOR A_AMPL={2.5e-3,3.4e-2,0,4.5e-8};
+VECTOR A_ON=TABLE(10,1);
+----
+
+Circular definitions are not allowed.
+
+[[sec.control.eval]]
+==== Assignment to Variables
+
+A value is assigned to a variable or vector by using the function
+`EVAL(real- expression)`. When seen, this function is immediately
+evaluated and replaced by the result treated like a constant.
+
+----
+variable-name=EVAL(real-expression);
+----
+
+This statement acts like a FORTRAN or C assignment. The
+`real-expression` or `vector-expression` is *evaluated*, and the result
+is assigned as a constant to the variable or vector on the left-hand
+side. Finally the expression is discarded. The `EVAL` function can also
+be used within an expression, e. g.:
+
+----
+vector-name=TABLE(range,EVAL(real-expression));
+vector-name={...,EVAL(real-expression),...);
+----
+
+A sequence like the following is permitted:
+
+----
+...                 // some definitions
+REAL X=0;           // create variable X with value
+                    // zero
+WHILE (X <= 0.10) {
+  VALUE, VALUE={X};
+  X=EVAL(X+.01);    // increment variable X by 0.01
+                    // CANNOT use: X=X+.01;
+}
+----
+
+[[sec.control.value]]
+==== VALUE: Output of Expressions
+
+The statement
+
+----
+VALUE,VALUE=expression-vector;
+----
+
+evaluates a set of expressions using the most recent values of any
+operands and prints the results on the standard error file.
+
+Example:
+
+----
+REAL A=4;
+VALUE,VALUE=TABLE(5,#*A);
+REAL P1=5;
+REAL P2=7;
+VALUE,VALUE={P1,P2,P1*P2-3};
+----
+
+These commands give the results:
+
+----
+value: TABLE(1:5:1,(#*A)) = {4, 8, 12, 16, 20}
+value: {P1,P2,P1*P2-3} = {5, 7, 32}
+----
+
+This commands serves mainly for printing one or more quantities which
+depend on matched attributes. It also allows use of _OPAL_ as a
+programmable calculator. One may also tabulate functions.
+
+[[sec.control.miscellaneous-commands]]
+=== Miscellaneous Commands
+
+[[sec.control.echo]]
+==== ECHO Statement
+
+The `ECHO` statement has two formats:
+
+----
+ECHO,MESSAGE=message;
+ECHO,message;           // shortcut
+----
+
+`message` is a string value (see <<sec.format.astring,String Attributes>>).
+It is immediately transmitted to the `ECHO` stream.
+
+[[sec.control.system]]
+==== SYSTEM: Execute System Command
+
+The command `SYSTEM` allows to execute operating system commands on a single core. 
+After execution of the system
+command, successful or not, control returns to _OPAL_. It has two formats:
+
+----
+SYSTEM,CMD=string;
+SYSTEM,string;         // shortcut
+----
+
+The string (see <<sec.format.astring,String Attributes>>) `string`
+must be a valid operating system command.
+
+Most UNIX commands can be issued directly.
+
+Example:
+
+----
+SYSTEM,"ls -l"
+----
+
+causes a listing of the current directory in long form on the terminal.
+
+The `SYSTEM` command can also be used to execute an external script.
+
+Below is an example that generates a random seed with python.
+The python script
+link:examples/gen_seed.py[gen_seed.py]
+is called with the `SYSTEM` command.
+This scripts writes the seed to a file
+link:examples/gen_seed.opal[gen_seed.opal]
+that can be read with the `CALL` command.
+
+----
+SYSTEM, "python gen_seed.py";
+CALL, "gen_seed.opal";
+----
+
+[[sec.control.psystem]]
+==== PSYSTEM: Execute System Command in Parallel
+
+Also the command `PSYSTEM` allows to execute operating system commands. But 
+contrary to the command `SYSTEM` this command is executed on all cores.
+
+[[sec.control.title]]
+=== TITLE Statement
+
+The `TITLE` statement has three formats:
+
+----
+TITLE,STRING=page-header;   // define new page header
+TITLE,page-header;          // shortcut for first format
+TITLE,STRING="";            // clear page header
+----
+
+`page-header` is a string value (see <<sec.format.astring,String Attributes>>).
+It defines the page header which will be used as a title for subsequent output
+pages. Before the first `TITLE` statement is encountered, the page header is
+empty. It can be redefined at any time.
+
+[[sec.control.file-handling]]
+=== File Handling
+
+[[sec.control.call]]
+==== CALL Statement
+
+The `CALL` command has two formats:
+
+----
+CALL,FILE=file-name;
+CALL,file-name;
+----
+
+`file-name` is a string (see <<sec.format.astring,String Attributes>>).
+The statement causes the input to switch to the named file. Input continues on
+that file until a `STOP` or an end of file is encountered. Example:
+
+----
+CALL,FILE="structure";
+CALL,"structure";
+----
+
+[[sec.control.initopal]]
+==== init.opal
+
+Before entering the main input file, the file `$HOME/init.opal` is executed (if present).
+It can be thought of as a `CALL, FILE=$HOME/init.opal` statement at the start of the input file.
+This init file can be used to avoid writing the same lines in every input file.
+For example one can set some <<sec.control.option,`OPTION`>>,
+define a <<sec.control.macro,`MACRO`>>, or define some physics constants.
+
+Note that one should be well aware of the contents of the `init.opal` file as otherwise it might lead to confusion when switching to a different computer where the file is not present.
+Therefore, it might be advisable to use an explicit <<sec.control.call,`CALL`>> statement instead.
+
+Example:
+
+----
+// this is a init.opal file
+// all OPAL runs will use the same OPTIONs
+OPTION, ECHO=FALSE;
+OPTION, INFO=FALSE;             //psdump and statdump are in time steps
+OPTION, PSDUMPFREQ = 10000000;  //How often 6d info is dumped to _.h5_
+OPTION, STATDUMPFREQ = 10;      //How often beam stats dumped to _.stat_
+OPTION, BOUNDPDESTROYFQ=10;     //Delete lost particles, if any
+OPTION, AUTOPHASE=4;            //Always leave this on, unless doing a phase scan
+OPTION, VERSION=20000;
+----
+
+[[sec.control.if]]
+=== IF: Conditional Execution
+
+Conditional execution can be requested by an `IF` statement. It allows
+usages similar to the C language `if` statement:
+
+----
+IF (logical) statement;
+IF (logical) statement; ELSE statement;
+IF (logical) { statement-group; }
+IF (logical) { statement-group; }
+  ELSE { statement-group; }
+----
+
+Note that all statements must be terminated with semicolons (`;`), but
+there is no semicolon after a closing brace. The statement or group of
+statements following the `IF` is executed if the condition is satisfied.
+If the condition is false, and there is an `ELSE`, the statement or
+group following the `ELSE` is executed.
+
+[[sec.control.while]]
+=== WHILE: Repeated Execution
+
+Repeated execution can be requested by a `WHILE` statement. It allows
+usages similar to the C language `while` statement:
+
+----
+WHILE (logical) statement;
+WHILE (logical) { statement-group; }
+----
+
+Note that all statements must be terminated with semicolons (`;`), but
+there is no semicolon after a closing brace. The condition is
+re-evaluated in each iteration. The statement or group of statements
+following the `WHILE` is repeated as long as the condition is satisfied.
+Of course some variable(s) must be changed within the `WHILE` group to
+allow the loop to terminate.
+
+[[sec.control.macro]]
+=== MACRO: Macro Statements (Subroutines)
+
+Subroutine-like commands can be defined by a `MACRO` statement. It
+allows usages similar to C language function call statements. A macro is
+defined by one of the following statements:
+
+----
+name(formals): MACRO { token-list }
+name(): MACRO { token-list }
+----
+
+A macro may have formal arguments, which will be replaced by actual
+arguments at execution time. An empty formals list is denoted by `()`.
+Otherwise the `formals` consist of one or more names, separated by
+commas. The `token-list` consists of input tokens (strings, names,
+numbers, delimiters etc.) and is stored unchanged in the definition.
+
+A macro is executed by one of the statements:
+
+----
+name(actuals);
+name();
+----
+
+Each actual consists of a set of tokens which replaces all occurrences
+of the corresponding formal name. The actuals are separated by commas.
+Examples:
+
+----
+// macro definitions:
+SHOWIT(X): MACRO {
+   VALUE,VALUE={X};
+}
+DOIT(): MACRO {
+   DYNAMIC,LINE=RING,FILE="DYNAMIC.OUT";
+}
+KS(X,Y): MACRO {
+   Y = 3e-3*X+0.5e-3;
+}
+
+// macro calls:
+SHOWIT(PI);
+DOIT();
+REAL X = 2;
+REAL Y;
+KS(X, Y);
+SHOWIT(Y);
+
+----
+
+// EOF

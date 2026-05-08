@@ -1,0 +1,61 @@
+[#app.developer-build]
+= Build and Developer Resources
+
+This appendix collects the top-level build and developer entry points that are
+listed on the public project pages.
+
+[[sec.developer-build.compiling]]
+== Compiling
+
+For _OPAL_, the project pages collect the standard build instructions:
+
+* link:For-Developers/Supported-OS-and-required-Software-to-build-OPAL.html[Supported OS and required software to build _OPAL_]
+* link:For-Developers/Setup-build-environment-at-PSI.html[Setup build environment at PSI]
+* link:For-Developers/Compile-required-software.html[Compile required software]
+* link:For-Developers/Compile-OPAL.html[Compile _OPAL_]
+* link:For-Developers/Compile-OPAL-at-CSCS.html[Compile _OPAL_ at CSCS]
+
+For _OPALX_, the current public build and run instructions are hosted at
+{link_merlin7_opalx}[Run/compile _OPALX_ on Merlin7].
+
+[[sec.developer-build.developer-resources]]
+== Developer Resources
+
+The following links point to the developer-oriented pages referenced from the
+project landing page:
+
+opalx-begin
+* link:For-Developers/CodingStyle.html[Coding Style]
+* link:For-Developers/amd-lumi-debug.html[AMD (Lumi) Debug Guide]
+* link:For-Developers/File-Format-for-stat-Storage.html[File Format Statistical Output]
+* link:For-Developers/Most-Used-Directories-in-the-Code.html[Guide to program structure]
+* link:For-Developers/OPAL-Development-Workflow.html[Development workflow]
+* link:For-Developers/unit-tests.html[Unit tests]
+* link:For-Developers/tech-ideas.html[Ideas]
+* {link_opalx_doxygen}[OPALX Doxygen]
+* {link_OPALX_repo}[OPALX source code repository]
+* {link_opalx_regression_doc}[OPALX regression tests]
+opalx-end
+
+opal-begin
+* link:For-Developers/CodingStyle.html[Coding Style and conventions]
+* link:For-Developers/unit-tests.html[Building, executing, and writing unit tests]
+* link:For-Developers/OPAL-Development-Workflow.html[Development workflow, Git, and GitLab usage]
+* link:For-Developers/Release-Procedure.html[Release procedure]
+* {link_doxygen_doc}[OPAL Doxygen]
+* {link_reg_tests}[Regression-test repository]
+* {link_opal_regression_doc}[Regression tests]
+* {link_opal_unit_doc}[Unit tests]
+opal-end
+
+[[sec.developer-build.repositories]]
+== Source Repositories and Issue Trackers
+
+The main source repositories and issue trackers are:
+
+* {link_OPAL_repo}[OPAL repository]
+* {link_OPAL_issue_tracker}[OPAL issue tracker]
+* {link_OPALX_repo}[OPALX repository]
+* {link_OPALX_issue_tracker}[OPALX issue tracker]
+* {link_OPAL_regression}[OPAL regression-test repository]
+* {link_OPALX_regression}[OPALX regression-test repository]

@@ -1,0 +1,72 @@
+:OPAL_version:                          2024.2
+:OPALX_version:                         2026.0
+
+:branch_OPAL:                           master
+:branch_OPALX:                           master
+
+:branch_manual:                         master
+:branch_reg_tests:                      master
+
+:host_git:                              https://github.com/OPALX-project
+:host_amas:                             http://amas.web.psi.ch
+
+:link_manual:                           {link_public_manual}
+:link_manual_src:                       .
+
+:link_OPAL:                             {link_OPAL_repo}
+:link_OPAL_wiki:                        {link_opal_pages}
+
+:link_pyOPALTools:                      {link_pyopaltools}
+:link_pyOPALTools_wiki:                 {link_pyOPALTools}
+:link_PSI_Ring:                         {host_git}/AMAS-BDModels/PSI-Ring
+:link_RRI2_0038Y1:                      {link_PSI_Ring}/blob/master/RawData/RRI2-0038Y17.peaks[file].
+
+:link_opt_pilot:                        {link_OPAL_repo}
+:link_opt_pilot_wiki:                   {link_opt_pilot}
+
+:link_H5hut:                            {link_public_manual}/h5root.html
+:link_H5hut_wiki:                       {link_H5hut}
+
+:link_doxygen_doc:                      {host_amas}/opal/CodeDocumentation/{branch_OPAL}
+
+:mail_mailing_list:                     opal AT lists.psi.ch
+:link_mailing_list:                     https://psilists.ethz.ch/sympa/subscribe/opal
+
+:link_org:                              https://github.com/OPALX-project
+:link_OPAL_repo:                        {link_org}/OPAL
+:link_OPALX_repo:                       {link_org}/OPALX
+:link_OPAL_regression:                  {link_org}/regression-tests
+:link_OPALX_regression:                 {link_org}/regression-tests-x
+:link_OPAL_issue_tracker:               {link_OPAL_repo}/issues
+:link_OPALX_issue_tracker:              {link_OPALX_repo}/issues
+
+:link_opal_pages:                       https://opalx-project.github.io
+:link_public_manual:                    {link_opal_pages}/Manual-old
+:link_doxydoc:                          {link_opal_pages}/OPAL
+:link_pyopaltools:                      {link_org}/pyOPALTools
+:link_opal_references:                  {link_opal_pages}/OPAL-References
+:link_pkg:                              https://github.com/OPALX-project/OPAL/releases/download
+:link_src:                              https://github.com/OPALX-project/OPAL/releases/download
+:linux_pkg:                             -x86_64-linux.tar.xz[tar.xz]
+:linux_md5:                             -x86_64-linux.tar.xz.md5[md5]
+:macos_pkg:                             -x86_64-macos.tar.xz[tar.xz(x86_64)]
+:macos_md5:                             -x86_64-macos.tar.xz.md5[md5]
+:macos_arm_pkg:                         -arm-macos.tar.xz[tar.xz(M1)]
+:macos_arm_md5:                         -arm-macos.tar.xz.md5[md5]
+:link_merlin7_opalx:                    https://hpce.pages.psi.ch/merlin7/05-Software-Support/opal-x/
+:link_opalx_doxygen:                    https://amas.pages.psi.ch/opal-live-doc/opalx-doxygen/index.html
+:link_opal_regression_doc:              https://amas.pages.psi.ch/opal-live-doc/opal-regression-test/regressionTests/master/index.html
+:link_opal_unit_doc:                    https://amas.pages.psi.ch/opal-live-doc/opal-regression-test/unitTests/master/index.html
+:link_opalx_regression_doc:             https://amas.pages.psi.ch/opal-live-doc/opalx-regression-test/overview/master/index.html
+
+:link_ipac2017:                         http://accelconf.web.cern.ch/AccelConf/ipac2017
+:link_ipac2017_thpab077:                {link_ipac2017}/papers/thpab077.pdf
+
+:link_prab:                             https://journals.aps.org/prab
+:link_prab2019_frey:                    {link_prab}/pdf/10.1103/PhysRevAccelBeams.22.064602
+
+:link_reg_tests:                        {link_OPAL_regression}
+:link_reg_tests_src:                    {link_reg_tests}/tree/{branch_reg_tests}/RegressionTests
+:link_regtest_MAP_FODO:                 {link_reg_tests_src}/MAP-FODO
+:link_regtest_LaserEmission_1:          {link_reg_tests_src}/LaserEmission-1
+:link_regtest_RingCyclotronMatched:     {link_reg_tests_src}/RingCyclotronMatched

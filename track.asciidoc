@@ -1,0 +1,289 @@
+ifdef::env-gitlab[]
+include::Manual.attributes[]
+include::env-gitlab.attributes[]
+{link_home}
+
+toc::[]
+endif::[]
+
+[[chp.track]]
+== Tracking
+include::stylesheets/Toggle[]
+
+[[sec.track.mode]]
+=== Track Mode
+
+Before starting to track, a <<chp.lines,`LINE`>> and a
+<<chp.beam-command,`BEAM`>> must be selected.
+opalx-begin
+In _OPALX_, a single beam can be selected with `BEAM`, or multiple beams can be selected with
+`BEAMS`.
+opalx-end
+The time step (`DT`) and the maximal steps to track (`MAXSTEPS`) or `ZSTOP`
+should be set. This command causes _OPAL_ to enter "tracking mode", in which it
+accepts only the track commands (see <<tab_TRACK_Commands>>). In order to
+perform several tracks, specify arrays of parameter in `DT`, `MAXSTEPS` and
+`ZSTOP`. This can be used to change the time step manually.
+
+
+.Commands accepted in Tracking Mode
+[[tab_TRACK_Commands,Table {counter:tab-cnt}]]
+[cols="<1,<3",options="header",]
+|=======================================================================
+|Command          | Purpose
+|`TRACK`          | Enter tracking mode
+
+|`LINE`           | Label of `LINE` or `SEQUENCE`
+
+|`BEAM`           | Label of `BEAM`
+opalx-begin
+|`BEAMS`          | Array of `BEAM` labels (_OPALX_)
+opalx-end
+
+|`T0`             | Initial time [s]
+
+|`DT`             | Array of time step sizes for tracking [s]
+
+|`MAXSTEPS`       | Array of maximal number of time steps
+
+|`ZSTART`         | z-location [m], from where to run simulation
+
+|`ZSTOP`          | Array of z-location [m], after which the simulation switches
+to the next set of `DT`, `MAXSTEPS` and `ZSTOP`
+
+|`STEPSPERTURN`   | Number of time steps per revolution period
+
+|`TIMEINTEGRATOR` | Defines the time integrator used in _OPAL-cycl_
+
+|`name=expression` | Parameter relation
+
+|`RUN`            | Run particles for specified number of turns or steps
+
+|`ENDTRACK`       | Leave tracking mode
+|=======================================================================
+
+
+The attributes of the command are:
+
+LINE::
+  The label of a preceding <<chp.lines,`LINE`>> (no default).
+BEAM::
+  The named `BEAM` command defines the particle mass, charge and
+  reference momentum (default: `UNNAMED_BEAM`).
+opalx-begin
+BEAMS::
+  _OPALX_ array of `BEAM` labels. If `BEAMS` is present it takes precedence
+  over `BEAM`. `BEAM` remains valid for single-beam inputs and backward
+  compatibility.
++
+In the current Part 1 multiple-species implementation, _OPALX_ accepts
+multiple beams on `TRACK` and allocates one particle container per beam during
+initialisation. Full multi-container tracking and field-solver coupling are
+still under development.
++
+`PARTICLE=PHOTON` beams are currently rejected by `TRACK`. Photon transport is
+reserved for a later OPALX step.
+opalx-end
+T0::
+  The initial time [s] of the simulation, its default value is 0.
+DT::
+  Array of time step sizes for tracking, default length of the array is
+  1 and its only value is 1 ps.
+MAXSTEPS::
+  Array of maximal number of time steps, default length of the array is
+  1 and its only value is 10.
+ZSTART::
+  Initial position of the reference particle along the reference
+  trajectory, default position is 0.0 m.
+ZSTOP::
+  Array of z-locations [m], default length of the array is 1 and its
+  only value is latexmath:[1E6] [m]. The simulation switches to the
+  next set, latexmath:[i+1], of `DT`, `MAXSTEPS` and `ZSTOP` if either
+  it has been tracking with the current set for more than
+  latexmath:[\mathrm{MAXSTEPS}_i] steps or the mean position
+  has reached a z-position larger than
+  latexmath:[\mathrm{ZSTOP}_i]. If set latexmath:[i] is the
+  last set of the array then the simulation stops.
+TIMEINTEGRATOR::
+  Define the time integrator. Currently only available in _OPAL-cycl_.
+  The valid options are `RK4`, `LF2` and `MTS`:
++
+  * RK4
+    the fourth-order Runge-Kutta integrator. This is the default
+    integrator for _OPAL-cycl_.
+  * LF2
+    the second-order Boris-Buneman (leapfrog-like) integrator.
+    Currently, `LF-2` is only available for multi-particles with/without
+    space charge. For single particle tracking and tune calculations,
+    use the `RK4` for the time being.
+  * MTS
+    the multiple-time-stepping integrator. Considering that the space
+    charge fields change much slower than the external fields in
+    cyclotrons, the space charge can be calculated less frequently than
+    the external field interpolation, so as to reduce time to solution.
+    The outer step (determined by `STEPSPERTURN`) is used to integrate
+    space charge effects. A constant number of sub-steps per outer step
+    is used to query external fields and to move the particles. The
+    number of sub-steps can be set with the option `MTSSUBSTEPS` and its
+    default value is 1. When using this integrator, the input file has
+    to be rewritten in the units of the outer step. For example,
+    extracts of the input file suited for `LF2` or `RK4` read
++
+----
+Option, PSDUMPFREQ=100;
+Option, REPARTFREQ=20;
+Option, SPTDUMPFREQ=50;
+Option, VERSION=10600;
+REAL turns=5;
+REAL nstep=3000;
+
+TRACK, LINE=l1, BEAM=beam1, MAXSTEPS=nstep*turns, STEPSPERTURN=nstep, TIMEINTEGRATOR=LF2
+RUN, METHOD="CYCLOTRON-T", BEAM=beam1, FIELDSOLVER=Fs1, DISTRIBUTION=Dist1;
+
+ENDTRACK;
+----
++
+and should be transformed to
++
+----
+Option, MTSSUBSTEPS=10;
+Option, PSDUMPFREQ=10;
+Option, REPARTFREQ=2;
+Option, SPTDUMPFREQ=5;
+Option, VERSION=10600;
+REAL turns=5;
+REAL nstep=300;
+TRACK, LINE=l1, BEAM=beam1, MAXSTEPS=nstep*turns, STEPSPERTURN=nstep,
+TIMEINTEGRATOR=MTS;
+    RUN, METHOD = "CYCLOTRON-T", BEAM=beam1, FIELDSOLVER=Fs1, DISTRIBUTION=Dist1;
+ENDTRACK;
+----
++
+In general all step quantities should be divided by `MTSSUBSTEPS`.
++
+In our first experiments on PSI injector II cyclotron, simulations
+with reduced space charge solving frequency by a factor of 10 lie
+still very close to the original solution. How large `MTSSUBSTEPS`
+can be chosen of course depends on the importance of space charge
+effects.
+STEPSPERTURN::
+  Number of time steps per revolution period. Only available for
+  _OPAL-cycl_, default value is 720.
+
+In _OPAL-cycl_, instead of setting time step, the time steps per-turn
+should be set. The command format is:
+
+----
+TRACK, LINE=name, BEAM=name, MAXSTEPS=value, STEPSPERTURN=value;
+----
+
+Particles are tracked in parallel, i.e. the coordinates of all particles
+are transformed at each beam element as it is reached.
+
+_OPAL_ leaves *track mode* when it sees the command 
+
+----
+ENDTRACK;
+----
+
+[[sec.track.particles]]
+=== Track Particles
+[.feature-opal]
+This command starts or continues the actual tracking:
+opal-begin
+RUN, METHOD=string, FIELDSOLVER=label, DISTRIBUTION=label-vector, BEAM=label,
+     TURNS=integer, MBMODE=string, PARAMB=float,
+     BOUNDARYGEOMETRY=string, TRACKBACK=logical;
+opal-end
+
+[.feature-opalx]
+This command starts or continues the actual tracking:
+opalx-begin
+RUN, FIELDSOLVER=label, DISTRIBUTION=label-vector,
+     TURNS=integer, MBMODE=string, PARAMB=float,
+     BOUNDARYGEOMETRY=string, TRACKBACK=logical;
+opalx-end
+
+The `RUN` command initialises tracking and uses the most recent particle
+bunch for initial conditions. The particle positions may be the result
+of previous tracking.
+
+Its attributes are
+[.feature-opal]
+METHOD::
+  The name (a string, see <<sec.format.astring,String Attributes>>)
+  of the tracking method to be used. For the time being the following methods are known:
++
+  * `PARALLEL-T`
+    This method puts _OPAL_ in _OPAL-t_ mode (see Chapter <<chp.opalt,_OPAL-t_>>).
+  * `CYCLOTRON-T`
+    This method puts _OPAL_ in _OPAL-cycl_ mode (see Chapter <<chp.opalcycl,_OPAL-cycl_>>).
+FIELDSOLVER::
+  The field solver to be used (see Chapter <<chp.fieldsolvers,Field Solver>>).
+DISTRIBUTION::
+  The particle distribution to be used (see Chapter <<chp.distribution,Distribution>>).
+BEAM::
+  In _OPAL_, the particle beam (see Chapter <<chp.beam-command,Beam Command>>) to be used is specified here.
+opalx-begin
+In _OPALX_, `RUN` no longer accepts a `BEAM` attribute. Beam selection is taken
+from the enclosing `TRACK` command through `BEAM` or `BEAMS`.
+opalx-end
+TURNS::
+  The number of turns (integer) to be tracked (default: 1, namely single bunch).
++
+In _OPAL-cycl_, this parameter represents the number of bunches that
+will be injected into the cyclotron. In restart mode, the code firstly
+reads an attribute `NumBunch` from _.h5_ file which records how many
+bunches have already been injected. If `NumBunch` latexmath:[<] `TURNS`,
+the last `TURNS` latexmath:[-] `NumBunch` bunches will be injected in
+sequence by reading the initial distribution from the _.h5_ file.
+MBMODE::
+  This defines which mode of multi-bunch runs. There are two options for it,
+  namely, `AUTO` and `FORCE`. See <<sec.opalcycl.MultiBunch,Multi-bunch Mode>>
+  for their explanations in detail.
++
+For restarting run with `TURNS` larger than one, if the existing
+bunches of the read-in step is larger than one, the mode is forcedly
+set to `FORCE`. Otherwise, it is forcedly set to `AUTO`.
++
+This argument is available for _OPAL-cycl_.
+PARAMB::
+  This is a control parameter to define when to start to transfer from
+  single bunch to multi-bunches for `AUTO` mode (default: 5.0).
+  This argument is only available for `AUTO` mode multi-bunch run in _OPAL-cycl_.
++
+MB_BINNING::
+  Type of energy binning in multi-bunch mode: `GAMMA_BINNING` or `BUNCH_BINNING`
+  (default: `GAMMA_BINNING`). When `BUNCH_BINNING` binning, then all particles
+  of a bunch are in the same energy bin. When `GAMMA_BINNING` binning, then the
+  bin depends on the momentum of the particle. Only available in _OPAL-cycl_.
++
+MB_ETA::
+  The scale parameter for binning in multi-bunch mode (default: 0.01). Only
+  used in `MB_BINNING=GAMMA_BINNING`. Only available in _OPAL-cycl_.
++
+BOUNDARYGEOMETRY::
+  The boundary geometry specification is used for
+  particle termination (see Chapter <<chp.geometry,Geometry>>).
+
++
+TRACKBACK::
+  The particles are tracked backward in time if `TRACKBACK=TRUE`. _OPAL_ starts at 
+  `ZSTART` and tracks the bunch back in time. It changes the size of the time step
+  when it crosses the thresholds given in the `ZSTOP` attribute of the `TRACK` 
+  command and stops once it reaches the lowest item of `ZSTOP`.
+  Only available in _OPAL-t_. Default is `FALSE`.
+
+Example:
+
+----
+RUN, FILE="table", TURNS=5, MBMODE=AUTO, PARAMB=10.0,
+     METHOD="CYCLOTRON-T", BEAM=beam1, FIELDSOLVER=Fs1,
+     DISTRIBUTION=Dist1;
+----
+
+This command tracks 5 bunches in cyclotron and writes the results on
+file `table`.
+
+
+// EOF
